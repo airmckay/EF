@@ -1,0 +1,29 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+library(easyclimate)
+
+coords <- data.frame(lon = 59.50, lat = 11.73)
+
+prec <- get_daily_climate(coords, 
+                          period = "2020-07-01:2020-10-01", 
+                          climatic_var = "Prcp",
+                          version = 4) # default
+
+require(tidyverse)
+require(sf)
+library(usethis)
+remove.packages("rlang")
+library(rlang)
+library("devtools")
+devtools::install_git("git@git.nilu.no:rextapi/frostr.git")
+ C:/Users/apmc/Rlibrary/00LOCK/rlang/libs/x64/rlang.dll to C:\Users\apmc\Rlibrary\rlang\libs\x64\rlang.dll
+ 
+
+```
+
