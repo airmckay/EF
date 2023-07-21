@@ -16,13 +16,6 @@ https://frost.met.no/r_example.html
 # This has a weird bug in it but eventually would be good to understand how it works... 
 https://git.nilu.no/rextapi/frostr
 
-# List of different weather elements 
-https://frost.met.no/elementtable 
-
-## Manually search for weather stations 
-https://senorge.no/ 
-
-
 
 ```{r}
 
@@ -40,10 +33,7 @@ library(purrr)
 # This object stores all the sourceids and metadata for weather stations available through frost in Norway in Marker municipality 
 findsources <- get_sources("0d4a9300-91f3-485c-a92f-e0ca9357b6c6", country = "NO", municipality = "MARKER", return_response = FALSE)
 # Ørje E18 border station = SN1960 
-
-# But where can I find wind data? 
-findsources1 <- get_sources("0d4a9300-91f3-485c-a92f-e0ca9357b6c6", country = "NO", )
-
+# 
 
 # Insert your own client ID here
 client_id = '0d4a9300-91f3-485c-a92f-e0ca9357b6c6'
@@ -64,7 +54,7 @@ url <- paste0(
 # Issue an HTTP GET request and extract JSON data
 xs <- try(fromJSON(URLencode(url),flatten=T))
 
-url1
+url
 # Check if the request worked, print out any errors
 if (class(xs) != 'try-error') {
     df <- unnest(xs$data)
@@ -89,40 +79,10 @@ maybe <- cbind.data.frame(sourceId = as.character(xs$data$sourceId),
                           do.call(rbind,lapply(xs$data$observations,function(x)unlist(x)[1:9])))
 
 
-# Successfully extracted precipitation and temperature data but not wind... 
+
+length(xs$data$sourceId)
 
 
-```
-
-
-Further troubel shooting:: 
-```{r}
-## Try again with just wind
-
-# Define Endpoint and parameters
-endpoint <- paste0("https://", client_id, "@frost.met.no/observations/v0.jsonld")
-sources <- 'SN1950, SN1960'
-elements <- 'max(air_temperature PT10M)'
-referenceTime <- '2010-04-01/2010-04-03'
-# Build the URL to Frost
-url2 <- paste0(
-    endpoint, "?",
-    "sources=", sources,
-    "&referencetime=", referenceTime,
-    "&elements=", elements
-)
-# Issue an HTTP GET request and extract JSON data
-xs <- try(fromJSON(URLencode(url2),flatten=T))
-
-# Check if the request worked, print out any errors
-if (class(xs) != 'try-error') {
-    df <- unnest(xs$data)
-    print("Data retrieved from frost.met.no!")
-} else {
-    print("Error: the data retrieval was not successful!")
-}
-# See results 
-head(df)
-
+maybe2 <- as.data.frame(maybe)
 ```
 
