@@ -4,26 +4,58 @@ output: html_notebook
 editor_options: 
   chunk_output_type: inline
 ---
+Scripts for extracting weather data from the Frost API: https://frost.met.no/index.html
+
+# Make a client ID 
+Select the "Create User" button here: https://frost.met.no/howto.html 
+Save the client and secret ID somewhere safe. 
+
+# Reference for how access FROST API through R 
+https://frost.met.no/r_example.html 
+
 
 ```{r}
-library(easyclimate)
 
-coords <- data.frame(lon = 59.50, lat = 11.73)
 
-prec <- get_daily_climate(coords, 
-                          period = "2020-07-01:2020-10-01", 
-                          climatic_var = "Prcp",
-                          version = 4) # default
+# Libraries needed (jsonlite and tidyr must be installed in R)
+library(jsonlite)
+library(tidyr)
+library(frostr)
 
-require(tidyverse)
-require(sf)
-library(usethis)
-remove.packages("rlang")
-library(rlang)
-library("devtools")
-devtools::install_git("git@git.nilu.no:rextapi/frostr.git")
- C:/Users/apmc/Rlibrary/00LOCK/rlang/libs/x64/rlang.dll to C:\Users\apmc\Rlibrary\rlang\libs\x64\rlang.dll
- 
+## First, find the weather station(s) that you need. In this case, I want weather data as close as possible to the Marker wind park in Ørje - wind, temperature and precipitation. 
+
+# This object stores all the sourceids and metadata for weather stations available through frost in Norway 
+findsources <- get_sources("0d4a9300-91f3-485c-a92f-e0ca9357b6c6", country = "NO", return_response = FALSE)
+# Ørje E18 border station = SN1960 
+
+# Insert your own client ID here
+client_id = '0d4a9300-91f3-485c-a92f-e0ca9357b6c6'
+
+# Define Endpoint and parameters
+endpoint <- paste0("https://", client_id, "@frost.met.no/observations/v0.jsonld")
+sources <- 'SN1960'
+elements <- 'mean(air_temperature P1D),sum(precipitation_amount P1D),mean(wind_speed P1D)'
+referenceTime <- '2020-07-01/2020-10-01'
+# Build the URL to Frost
+url <- paste0(
+    endpoint, "?",
+    "sources=", sources,
+    "&referencetime=", referenceTime,
+    "&elements=", elements
+)
+# Issue an HTTP GET request and extract JSON data
+xs <- try(fromJSON(URLencode(url),flatten=T))
+
+
+# Check if the request worked, print out any errors
+if (class(xs) != 'try-error') {
+    df <- unnest(xs$data)
+    print("Data retrieved from frost.met.no!")
+} else {
+    print("Error: the data retrieval was not successful!")
+}
+# See results 
+head(df)
 
 ```
 
