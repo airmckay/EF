@@ -24,6 +24,12 @@ https://senorge.no/
 
 
 
+
+# Cool resource for finding global land / air datasets
+https://ebas-data.nilu.no/Default.aspx
+
+
+
 ```{r}
 
 # Libraries needed 
@@ -64,7 +70,7 @@ url <- paste0(
 # Issue an HTTP GET request and extract JSON data
 xs <- try(fromJSON(URLencode(url),flatten=T))
 
-url1
+url
 # Check if the request worked, print out any errors
 if (class(xs) != 'try-error') {
     df <- unnest(xs$data)
@@ -76,11 +82,11 @@ if (class(xs) != 'try-error') {
 head(df)
 
 
-df1 <- unnest(xs$data[[2]])
-df2 <- rbind(xs$data)
-df3 <- rbind(df2$observations)
-df4 <- data.frame(xs$data)
-str(df4)
+# df1 <- unnest(xs$data[[2]])
+# df2 <- rbind(xs$data)
+# df3 <- rbind(df2$observations)
+# df4 <- data.frame(xs$data)
+# str(df4)
 
 
 
@@ -94,26 +100,39 @@ maybe <- cbind.data.frame(sourceId = as.character(xs$data$sourceId),
 
 ```
 
+## Next 
 
-Further troubel shooting:: 
+Does work:
+- max(air_temperature PT10M)
+- sum(precipitation_amount P1D) 
+
+### Doesn't work: 
+- mean(wind_speed P1D)
+- max(air_temperature PT1H)
+- max(air_temperature PT12H)
+- max(wind_speed P1D)
+- max(wind_from_direction_of_gust PT10M)
+
+## Troubleshooting: 
 ```{r}
-## Try again with just wind
 
 # Define Endpoint and parameters
 endpoint <- paste0("https://", client_id, "@frost.met.no/observations/v0.jsonld")
-sources <- 'SN1950, SN1960'
-elements <- 'max(air_temperature PT10M)'
-referenceTime <- '2010-04-01/2010-04-03'
+sources <- 'SN1960, SN1950'
+elements <- 'max(air_temperature PT12H)'
+referenceTime <- '2020-07-01/2020-10-01'
+
 # Build the URL to Frost
-url2 <- paste0(
+url <- paste0(
     endpoint, "?",
     "sources=", sources,
     "&referencetime=", referenceTime,
     "&elements=", elements
 )
 # Issue an HTTP GET request and extract JSON data
-xs <- try(fromJSON(URLencode(url2),flatten=T))
+xs <- try(fromJSON(URLencode(url),flatten=T))
 
+url
 # Check if the request worked, print out any errors
 if (class(xs) != 'try-error') {
     df <- unnest(xs$data)
@@ -124,5 +143,34 @@ if (class(xs) != 'try-error') {
 # See results 
 head(df)
 
+
+# df1 <- unnest(xs$data[[2]])
+# df2 <- rbind(xs$data)
+# df3 <- rbind(df2$observations)
+# df4 <- data.frame(xs$data)
+# str(df4)
+
+
+
+maybe <- cbind.data.frame(sourceId = as.character(xs$data$sourceId),
+                          referencTime = as.character(xs$data$referenceTime),
+                          do.call(rbind,lapply(xs$data$observations,function(x)unlist(x)[1:9])))
+
+
 ```
+## Time to try and collect model predictions of weather data 
+https://github.com/BigelowLab/thredds
+
+
+```{r}
+## ALso not successful here, but can try again later: 
+
+# library(devtools)
+# install_github("BigelowLab/thredds")
+# library(ncdf4)
+# library(thredds)
+
+```
+
+
 
