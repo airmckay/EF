@@ -1,0 +1,167 @@
+---
+title: "Preparing data for Kpro processing"
+output: html_document
+date: "2023-08-14"
+---
+
+
+```{r}
+getwd()
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+setwd("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF")
+```
+
+# Extract raw bat acoustic data for manual acoustic analysis for Jenn Fairchild's manual acoustic analysis
+1.a - Read id.csv files from all WAV folder directories of the bat acoustic data from the Follo Forest 2021 and 2022 field seasons 
+1.b - Combine those id.csv's into one master csv file
+2.a - Subset to only include files that correspond to AUTO.ID.s of PIPY, PIPI, PINA, NoID, NYNO (Jenn) -J1 
+2.b - Subset to only include Myotis and Plecotus species as well as BABA (Mathilde) - M1 
+3.a - Subset J1 to only include data between May 15 and 27 June for both seasons  - J2 
+3.b - Subset M1 to only include the data from 2022 (whole season) - M2
+4.a - Copy files that match J2 into the external hard disk 
+4.b - Copy files that match M2 into the Project Largefile. 
+
+## 2021 FIRST
+Step 1 - read the csv files of all bat acoustic data for both Follo Forest seasons and combine them 
+```{r}
+
+## 2021 
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file( "P:/EcoForest/Acoustics"))) 
+#also includes 2022 data)
+getwd()
+#"\\\\largefile.nmbu.no/Project/FolloForest2021" This also uncludes 2022 data (sorry that is confusing)
+
+# Specify directories
+# 2021 field season first (data structures slightly different between seasons)
+
+
+# folders where csv files are all in for each site
+
+input2CB <-"P:/EcoForest/Acoustics/EF2-CC-B" 
+input2NB <-"P:/EcoForest/Acoustics/EF2-NN-B" 
+
+input3CB <-"P:/EcoForest/Acoustics/EF3-CC-B" 
+input3NB <-"P:/EcoForest/Acoustics/EF3-NN-B" 
+
+input4CB <-"P:/EcoForest/Acoustics/EF4-CC-B" 
+input4NB <-"P:/EcoForest/Acoustics/EF4-NN-B" 
+
+input5CB <-"P:/EcoForest/Acoustics/EF5-CC-B" 
+input5NB <-"P:/EcoForest/Acoustics/EF5-NN-B" 
+
+input6CB <-"P:/EcoForest/Acoustics/EF6-CC-B" 
+input6NB <-"P:/EcoForest/Acoustics/EF6-NN-B" 
+
+input7CB <-"P:/EcoForest/Acoustics/EF7-CC-B" 
+input7NB <-"P:/EcoForest/Acoustics/EF7-NN-B" 
+
+input8CB <-"P:/EcoForest/Acoustics/EF8-CC-B" 
+input8NB <-"P:/EcoForest/Acoustics/EF8-NN-B" 
+
+input9CB <-"P:/EcoForest/Acoustics/EF9-CC-B" 
+input9NB <-"P:/EcoForest/Acoustics/EF9-NN-B" 
+
+input11CB <-"P:/EcoForest/Acoustics/EF11-CC-B" 
+input11NB <-"P:/EcoForest/Acoustics/EF11-NN-B" 
+
+input12CB <-"P:/EcoForest/Acoustics/EF12-CC-B" 
+input12NB <-"P:/EcoForest/Acoustics/EF12-NN-B" 
+
+#############################################
+
+### Pull the summary files to check that each site has the expected number of data collections and that the correct detector corresponds to the site. 
+
+EF2cb <- list.files(path=input2CB, pattern="Summary.txt", recursive = TRUE)
+EF2cb
+# "DATA/21.07.2023_EF2-CC-B/S4U08153_A_Summary.txt" "DATA/28.06.2023_EF2-CC-B/S4U08153_A_Summary.txt"
+
+EF2nb <- list.files(path=input2NB, pattern="Summary.txt", recursive = TRUE)
+EF2nb
+# "DATA/21.07.2023_EF2-NN-B/S4U12454_A_Summary.txt" "DATA/28.06.2023_EF2-NN-B/S4U12454_A_Summary.txt"
+
+EF3cb <- list.files(path=input3CB, pattern="Summary.txt", recursive = TRUE)
+EF3cb
+# "DATA/05.07.2023_EF3-CC-B/S4U12331_A_Summary.txt" "DATA/22.07.2023_EF3-CC-B/S4U12331_A_Summary.txt"
+
+EF3nb <- list.files(path=input3NB, pattern="Summary.txt", recursive = TRUE)
+EF3nb
+# "DATA/05.07.2023_EF3-NN-B/S4U09690_A_Summary.txt" "DATA/22.07.2023_EF3-NN-B/S4U09690_A_Summary.txt"
+
+EF4cb <- list.files(path=input4CB, pattern="Summary.txt", recursive = TRUE)
+EF4cb
+# "DATA/06.07.2023_EF4-CC-B/S4U08483_A_Summary.txt" "DATA/23.07.2023_EF4-CC-B/S4U08483_A_Summary.txt"
+
+EF4nb <- list.files(path=input4NB, pattern="Summary.txt", recursive = TRUE)
+EF4nb
+# "DATA/05.07.2023_EF4-NN-B/S4U11999_A_Summary.txt" "DATA/23.07.2023_EF4-NN-B/S4U11999_A_Summary.txt"
+
+EF5cb <- list.files(path=input5CB, pattern="Summary.txt", recursive = TRUE)
+EF5cb
+# "DATA/06.07.2023_EF5-CC-B/S4U12450_A_Summary.txt" "DATA/23.07.2023_EF5-CC-B/S4U12450_A_Summary.txt"
+
+EF5nb <- list.files(path=input5NB, pattern="Summary.txt", recursive = TRUE)
+EF5nb
+# "DATA/06.07.2023_EF5-NN-B/S4U12453_A_Summary.txt" "DATA/23.07.2023_EF5-NN-B/S4U12453_A_Summary.txt"
+
+EF6cb <- list.files(path=input6CB, pattern="Summary.txt", recursive = TRUE)
+EF6cb
+# "DATA/04.07.2023_EF6-CC-B/S4U12001_A_Summary.txt" "DATA/22.07.2023_EF6-CC-B/S4U12001_A_Summary.txt"
+
+EF6nb <- list.files(path=input6NB, pattern="Summary.txt", recursive = TRUE)
+EF6nb
+# "DATA/04.07.2023_EF6-NN-B/S4U10371_A_Summary.txt" "DATA/22.07.2023_EF6-NN-B/S4U10371_A_Summary.txt"
+
+EF7cb <- list.files(path=input7CB, pattern="Summary.txt", recursive = TRUE)
+EF7cb
+# "DATA/03.07.2023_EF7-CC-B/S4U10174_A_Summary.txt" "DATA/21.07.2023_EF7-CC-B/S4U10174_A_Summary.txt"
+
+EF7nb <- list.files(path=input7NB, pattern="Summary.txt", recursive = TRUE)
+EF7nb
+# "DATA/03.07.2023_EF7-NN-B/S4U09003_A_Summary.txt" "DATA/21.07.2023_EF7-NN-B/S4U09003_A_Summary.txt"
+
+EF8cb <- list.files(path=input8CB, pattern="Summary.txt", recursive = TRUE)
+EF8cb
+# "DATA/18.07.2023_EF8-CC-B/S4U12118_A_Summary.txt" "DATA/25.06.2023_EF8-CC-B/S4U12118_A_Summary.txt"
+
+EF8nb <- list.files(path=input8NB, pattern="Summary.txt", recursive = TRUE)
+EF8nb
+# "DATA/18.07.2023_EF8-NN-B/S4U11946_A_Summary.txt" "DATA/25.06.2023_EF8-NN-B/S4U11946_A_Summary.txt"
+
+EF9cb <- list.files(path=input9CB, pattern="Summary.txt", recursive = TRUE)
+EF9cb
+# "DATA/20.07.2023_EF9-CC-B/S4U12493_A_Summary.txt" "DATA/27.06.2023_EF9-CC-B/S4U12493_A_Summary.txt"
+
+EF9nb <- list.files(path=input9NB, pattern="Summary.txt", recursive = TRUE)
+EF9nb
+# "DATA/20.07.2023_EF9-NN-B/S4U12465_A_Summary.txt" "DATA/27.06.2023_EF9-NN-B/S4U12465_A_Summary.txt"
+
+EF11cb <- list.files(path=input11CB, pattern="Summary.txt", recursive = TRUE)
+EF11cb
+# "DATA/19.07.2023_EF11-CC-B/S4U12482_A_Summary.txt" "DATA/26.06.2023_EF11-CC-B/S4U12482_A_Summary.txt"
+
+EF11nb <- list.files(path=input11NB, pattern="Summary.txt", recursive = TRUE)
+EF11nb
+# "DATA/19.07.2023_EF11-NN-B/S4U12503_A_Summary.txt" "DATA/26.06.2023_EF11-NN-B/S4U12503_A_Summary.txt"
+
+EF12cb <- list.files(path=input12CB, pattern="Summary.txt", recursive = TRUE)
+EF12cb
+# "DATA/20.07.2023_EF12-CC-B/S4U12475_A_Summary.txt" "DATA/28.06.2023_EF12-CC-B/S4U12475_A_Summary.txt"
+
+EF12nb <- list.files(path=input12NB, pattern="Summary.txt", recursive = TRUE)
+EF12nb
+# "DATA/20.07.2023_EF12-NN-B/S4U12479_A_Summary.txt" "DATA/28.06.2023_EF12-NN-B/S4U12479_A_Summary.txt"
+
+
+
+```
+

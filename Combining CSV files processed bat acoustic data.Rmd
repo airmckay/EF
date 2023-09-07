@@ -1,0 +1,576 @@
+---
+title: "Combining CSV files processed bat acoustic data"
+output: html_document
+date: "2023-09-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#
+
+
+```{r}
+knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(tidy = "styler")
+ 
+
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(beepr)
+
+getwd()
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
+
+```
+
+
+
+```{r}
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file( "P:/EcoForest/Acoustics"))) 
+#only 2022 data)
+getwd()
+#  "P:/EcoForest/Acoustics"
+
+# Specify directories
+
+
+# folders where csv files are all in for each site
+                
+input2CB <-"P:/EcoForest/Acoustics/EF2-CC-B" 
+input2NB <-"P:/EcoForest/Acoustics/EF2-NN-B" 
+
+input3CB <-"P:/EcoForest/Acoustics/EF3-CC-B" 
+input3NB <-"P:/EcoForest/Acoustics/EF3-NN-B" 
+
+input4CB <-"P:/EcoForest/Acoustics/EF4-CC-B" 
+input4NB <-"P:/EcoForest/Acoustics/EF4-NN-B" 
+
+input5CB <-"P:/EcoForest/Acoustics/EF5-CC-B" 
+input5NB <-"P:/EcoForest/Acoustics/EF5-NN-B" 
+
+input6CB <-"P:/EcoForest/Acoustics/EF6-CC-B" 
+input6NB <-"P:/EcoForest/Acoustics/EF6-NN-B" 
+
+input7CB <-"P:/EcoForest/Acoustics/EF7-CC-B" 
+input7NB <-"P:/EcoForest/Acoustics/EF7-NN-B" 
+
+input8CB <-"P:/EcoForest/Acoustics/EF8-CC-B" 
+input8NB <-"P:/EcoForest/Acoustics/EF8-NN-B" 
+
+input9CB <-"P:/EcoForest/Acoustics/EF9-CC-B" 
+input9NB <-"P:/EcoForest/Acoustics/EF9-NN-B" 
+
+input11CB <-"P:/EcoForest/Acoustics/EF11-CC-B" 
+input11NB <-"P:/EcoForest/Acoustics/EF11-NN-B" 
+
+input12CB <-"P:/EcoForest/Acoustics/EF12-CC-B" 
+input12NB <-"P:/EcoForest/Acoustics/EF12-NN-B" 
+
+
+output <-"P:/EcoForest/ProcessedAcoustics/ROutputs" # where you want to save your data
+
+file.name <- "CombineAutoIDs"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+# i.e., "P:/EcoForest/ProcessedAcoustics/ROutputs/CombineAutoIDs_2023-09-07"
+
+
+```
+
+
+
+```{r}
+
+input2CB <-"P:/EcoForest/Acoustics/EF2-CC-B" 
+input2NB <-"P:/EcoForest/Acoustics/EF2-NN-B" 
+
+input3CB <-"P:/EcoForest/Acoustics/EF3-CC-B" 
+input3NB <-"P:/EcoForest/Acoustics/EF3-NN-B" 
+
+input4CB <-"P:/EcoForest/Acoustics/EF4-CC-B" 
+input4NB <-"P:/EcoForest/Acoustics/EF4-NN-B" 
+
+input5CB <-"P:/EcoForest/Acoustics/EF5-CC-B" 
+input5NB <-"P:/EcoForest/Acoustics/EF5-NN-B" 
+
+input6CB <-"P:/EcoForest/Acoustics/EF6-CC-B" 
+input6NB <-"P:/EcoForest/Acoustics/EF6-NN-B" 
+
+input7CB <-"P:/EcoForest/Acoustics/EF7-CC-B" 
+input7NB <-"P:/EcoForest/Acoustics/EF7-NN-B" 
+
+input8CB <-"P:/EcoForest/Acoustics/EF8-CC-B" 
+input8NB <-"P:/EcoForest/Acoustics/EF8-NN-B" 
+
+input9CB <-"P:/EcoForest/Acoustics/EF9-CC-B" 
+input9NB <-"P:/EcoForest/Acoustics/EF9-NN-B" 
+
+input11CB <-"P:/EcoForest/Acoustics/EF11-CC-B" 
+input11NB <-"P:/EcoForest/Acoustics/EF11-NN-B" 
+
+input12CB <-"P:/EcoForest/Acoustics/EF12-CC-B" 
+input12NB <-"P:/EcoForest/Acoustics/EF12-NN-B" 
+
+
+
+### Pull the id.csv files 
+
+EF2cb <- list.files(path=input2CB, pattern="id.csv", recursive = TRUE)
+EF2cb
+
+
+EF2nb <- list.files(path=input2NB, pattern="id.csv", recursive = TRUE)
+EF2nb
+
+
+EF3cb <- list.files(path=input3CB, pattern="id.csv", recursive = TRUE)
+EF3cb
+
+
+EF3nb <- list.files(path=input3NB, pattern="id.csv", recursive = TRUE)
+EF3nb
+
+
+EF4cb <- list.files(path=input4CB, pattern="id.csv", recursive = TRUE)
+EF4cb
+
+
+EF4nb <- list.files(path=input4NB, pattern="id.csv", recursive = TRUE)
+EF4nb
+
+
+EF5cb <- list.files(path=input5CB, pattern="id.csv", recursive = TRUE)
+EF5cb
+
+
+EF5nb <- list.files(path=input5NB, pattern="id.csv", recursive = TRUE)
+EF5nb
+
+
+EF6cb <- list.files(path=input6CB, pattern="id.csv", recursive = TRUE)
+EF6cb
+
+EF6nb <- list.files(path=input6NB, pattern="id.csv", recursive = TRUE)
+EF6nb
+
+
+EF7cb <- list.files(path=input7CB, pattern="id.csv", recursive = TRUE)
+EF7cb
+
+
+EF7nb <- list.files(path=input7NB, pattern="id.csv", recursive = TRUE)
+EF7nb 
+
+
+EF8cb <- list.files(path=input8CB, pattern="id.csv", recursive = TRUE)
+EF8cb
+
+
+EF8nb <- list.files(path=input8NB, pattern="id.csv", recursive = TRUE)
+EF8nb
+
+
+EF9cb <- list.files(path=input9CB, pattern="id.csv", recursive = TRUE)
+EF9cb
+
+
+EF9nb <- list.files(path=input9NB, pattern="id.csv", recursive = TRUE)
+EF9nb
+
+
+EF11cb <- list.files(path=input11CB, pattern="id.csv", recursive = TRUE)
+EF11cb
+
+
+EF11nb <- list.files(path=input11NB, pattern="id.csv", recursive = TRUE)
+EF11nb
+
+
+EF12cb <- list.files(path=input12CB, pattern="id.csv", recursive = TRUE)
+EF12cb
+
+
+EF12nb <- list.files(path=input12NB, pattern="id.csv", recursive = TRUE)
+EF12nb
+
+
+
+
+
+# #To read all your csv files and create a list with all these elements
+
+## EF2cb 
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input2CB)))
+getwd()
+
+EF2cb_data <- lapply(EF2cb, read.csv)
+
+
+
+## EF2nb
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input2NB)))
+getwd()
+
+EF2nb_data <- lapply(EF2nb, read.csv)
+
+
+
+ ## EF3cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input3CB)))
+getwd()
+
+EF3cb_data <- lapply(EF3cb, read.csv)
+
+
+
+ ## EF3nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input3NB)))
+getwd()
+
+EF3nb_data <- lapply(EF3nb, read.csv)
+
+
+
+ ## EF4cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input4CB)))
+getwd()
+
+EF4cb_data <- lapply(EF4cb, read.csv)
+
+
+
+ ## EF4nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input4NB)))
+getwd()
+
+EF4nb_data <- lapply(EF4nb, read.csv)
+
+
+
+ ## EF5cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input5CB)))
+getwd()
+
+EF5cb_data <- lapply(EF5cb, read.csv)
+
+
+
+ ## EF5nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input5NB)))
+getwd()
+
+EF5nb_data <- lapply(EF5nb, read.csv)
+
+
+
+ ## EF6cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input6CB)))
+getwd()
+
+EF6cb_data <- lapply(EF6cb, read.csv)
+
+
+
+ ## EF6nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input6NB)))
+getwd()
+
+EF6nb_data <- lapply(EF6nb, read.csv)
+
+
+
+ ## EF7cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input7CB)))
+getwd()
+
+EF7cb_data <- lapply(EF7cb, read.csv)
+
+
+
+ ## EF7nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input7NB)))
+getwd()
+
+EF7nb_data <- lapply(EF7nb, read.csv)
+
+
+
+ ## EF8cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input8CB)))
+getwd()
+
+EF8cb_data <- lapply(EF8cb, read.csv)
+
+
+ ## EF8nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input8NB)))
+getwd()
+
+EF8nb_data <- lapply(EF8nb, read.csv)
+
+
+
+ ## EF9cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input9CB)))
+getwd()
+
+EF9cb_data <- lapply(EF9cb, read.csv)
+
+
+
+ ## EF9nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input9NB)))
+getwd()
+
+EF9nb_data <- lapply(EF9nb, read.csv)
+
+
+
+ ## EF11cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input11CB)))
+getwd()
+
+EF11cb_data <- lapply(EF11cb, read.csv)
+
+
+
+ ## EF11nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input11NB)))
+getwd()
+
+EF11nb_data <- lapply(EF11nb, read.csv)
+
+
+
+
+ ## EF12cb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input12CB)))
+getwd()
+
+EF12cb_data <- lapply(EF12cb, read.csv)
+
+
+
+ ## EF12nb
+knitr::opts_chunk$set(
+    # This should allow Rmarkdown to locate the data
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input12NB)))
+getwd()
+
+EF12nb_data <- lapply(EF12nb, read.csv)
+
+
+# 
+  
+
+#To add the name of each csv in the list
+names(EF2nb_data) <- gsub("//.csv$", "", EF2nb)
+names(EF2cb_data) <- gsub("//.csv$", "", EF2cb)
+
+names(EF3nb_data) <- gsub("//.csv$", "", EF3nb)
+names(EF3cb_data) <- gsub("//.csv$", "", EF3cb)
+
+names(EF4nb_data) <- gsub("//.csv$", "", EF4nb)
+names(EF4cb_data) <- gsub("//.csv$", "", EF4cb)
+
+names(EF5nb_data) <- gsub("//.csv$", "", EF5nb)
+names(EF5cb_data) <- gsub("//.csv$", "", EF5cb)
+
+names(EF6nb_data) <- gsub("//.csv$", "", EF6nb)
+names(EF6cb_data) <- gsub("//.csv$", "", EF6cb)
+
+names(EF7nb_data) <- gsub("//.csv$", "", EF7nb)
+names(EF7cb_data) <- gsub("//.csv$", "", EF7cb)
+
+names(EF8nb_data) <- gsub("//.csv$", "", EF8nb)
+names(EF8cb_data) <- gsub("//.csv$", "", EF8cb)
+
+names(EF9nb_data) <- gsub("//.csv$", "", EF9nb)
+names(EF9cb_data) <- gsub("//.csv$", "", EF9cb)
+
+names(EF11nb_data) <- gsub("//.csv$", "", EF11nb)
+names(EF11cb_data) <- gsub("//.csv$", "", EF11cb)
+
+names(EF12nb_data) <- gsub("//.csv$", "", EF12nb)
+names(EF12cb_data) <- gsub("//.csv$", "", EF12cb)
+
+
+#To create one single dataframe with all single dataframes
+big_EF2nb <- rbindlist(EF2nb_data, fill = TRUE)
+big_EF2cb <- rbindlist(EF2cb_data, fill = TRUE)
+
+big_EF3nb <- rbindlist(EF3nb_data, fill = TRUE)
+big_EF3cb <- rbindlist(EF3cb_data, fill = TRUE)
+
+big_EF4nb <- rbindlist(EF4nb_data, fill = TRUE)
+big_EF4cb <- rbindlist(EF4cb_data, fill = TRUE)
+
+big_EF5nb <- rbindlist(EF5nb_data, fill = TRUE)
+big_EF5cb <- rbindlist(EF5cb_data, fill = TRUE)
+
+big_EF6nb <- rbindlist(EF6nb_data, fill = TRUE)
+big_EF6cb <- rbindlist(EF6cb_data, fill = TRUE)
+
+big_EF7nb <- rbindlist(EF7nb_data, fill = TRUE)
+big_EF7cb <- rbindlist(EF7cb_data, fill = TRUE)
+
+big_EF8nb <- rbindlist(EF8nb_data, fill = TRUE)
+big_EF8cb <- rbindlist(EF8cb_data, fill = TRUE)
+
+big_EF9nb <- rbindlist(EF9nb_data, fill = TRUE)
+big_EF9cb <- rbindlist(EF9cb_data, fill = TRUE)
+
+big_EF11nb <- rbindlist(EF11nb_data, fill = TRUE)
+big_EF11cb <- rbindlist(EF11cb_data, fill = TRUE)
+
+big_EF12nb <- rbindlist(EF12nb_data, fill = TRUE)
+big_EF12cb <- rbindlist(EF12cb_data, fill = TRUE)
+
+
+alist = list(big_EF2nb, big_EF2cb, 
+             big_EF3nb, big_EF3cb, 
+             big_EF4nb, big_EF4cb, 
+             big_EF5nb, big_EF5cb, 
+             big_EF6nb, big_EF6cb, 
+             big_EF7nb, big_EF7cb,
+             big_EF8nb, big_EF8cb,
+             big_EF9nb, big_EF9cb,
+             big_EF11nb, big_EF11cb,
+             big_EF12nb, big_EF12cb)
+
+big_data <- rbindlist(alist, fill=TRUE)
+dim(big_data)
+# 41754    44
+
+names(big_data)
+#  [1] "INDIR"         "OUTDIR"        "FOLDER"        "IN.FILE"       "CHANNEL"       "OFFSET"        "DURATION"      "OUT.FILE.FS"  
+#  [9] "OUT.FILE.ZC"   "DATE"          "TIME"          "HOUR"          "DATE.12"       "TIME.12"       "HOUR.12"       "AUTO.ID."     
+# [17] "PULSES"        "MATCHING"      "MATCH.RATIO"   "MARGIN"        "ALTERNATE.1"   "ALTERNATE.2"   "N"             "Fc"           
+# [25] "Sc"            "Dur"           "Fmax"          "Fmin"          "Fmean"         "TBC"           "Fk"            "Tk"           
+# [33] "S1"            "Tc"            "Qual"          "FILES"         "MANUAL.ID"     "ORGID"         "USERID"        "REVIEW.ORGID" 
+# [41] "REVIEW.USERID" "INPATHMD5"     "OUTPATHMD5FS"  "OUTPATHMD5ZC" 
+
+big_data$AUTO.ID. <- as.factor(big_data$AUTO.ID.)
+summary(big_data$AUTO.ID.)
+
+# BARBAR EPTNIL EPTSER MYOBEC MYOBRA MYODAS MYODAU MYOMYO MYOMYS MYONAT NYCLEI NYCNOC   NoID  Noise PIPPIP PIPPYG PLEAUR PLEAUS VESMUR 
+#    154   3676    437     18    826    527   2330     14   1586     35     26     64   8022  23824      6     25    160     19      5 
+
+# write.csv(big_data, file = file.path(output_today, "EcoForest2023_AllProcessedBatDataCombined.csv")) 
+
+
+# Now remove noise 
+nn_big_data <- big_data %>%  filter(AUTO.ID. != "Noise") %>%  droplevels() 
+
+dim(nn_big_data)
+# 17930    44
+
+summary(nn_big_data$AUTO.ID.)
+# BARBAR EPTNIL EPTSER MYOBEC MYOBRA MYODAS MYODAU MYOMYO MYOMYS MYONAT NYCLEI NYCNOC   NoID PIPPIP PIPPYG PLEAUR PLEAUS VESMUR 
+#    154   3676    437     18    826    527   2330     14   1586     35     26     64   8022      6     25    160     19      5 
+
+# write.csv(big_data, file = file.path(output_today, "EcoForest2023_NO_NOISE_AllProcessedBatDataCombined.csv")) 
+
+
+
+## Quality control checks! 
+
+
+# Check for OUTPUT file duplicates (not good)
+ n_occur <- data.frame(table(big_data$OUT.FILE.FS))
+ test <- n_occur[n_occur$Freq > 1,] # 0 obs! GOOD!
+ test # Found 0 duplicates (freq 2 from detector S4U08483 and 3 from S4U08153
+ 
+# Make an "IN detector# and an "OUT detector" column to see if these match.
+# This is a way to check if I accidentally processed the wrong raw data folder into a WAV folder
+ 
+head(big_data$IN.FILE)
+# "S4U12454_20230625_020014.wav
+head(big_data$OUT.FILE.FS)
+# S4U12454_20230625_020014_000.wav
+
+incols <- c("IN.Detector", "IN.Date", "IN.Time.wav")
+outcols <- c("OUT.Detector", "OUT.Date", "OUT.Time.wav", "zeros")
+
+big_data1 <- big_data %>% 
+  tidyr::separate(col = IN.FILE,
+                                        sep = "_",
+                                       into = incols, 
+                                       remove = FALSE) %>% 
+  tidyr::separate(col = OUT.FILE.FS,
+                                        sep = "_",
+                                       into = outcols, 
+                                       remove = FALSE) 
+# test to see when IN.Detector does not equal OUT.detector
+big_data2 <- big_data1 %>% 
+  mutate(HumanError = case_when(
+    IN.Detector == OUT.Detector ~ "Good", 
+    TRUE ~ "BAD") ) 
+
+big_data2$HumanError <- as.factor(big_data2$HumanError)
+
+summary(big_data2$HumanError)
+#  Good 
+# 41754 
+
+# There were no cases when the IN.Detector did not match the OUT.Detector (relief) 
+
+
+```
+
