@@ -20,17 +20,9 @@ setwd("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/
 ```
 
 # Extract raw bat acoustic data for manual acoustic analysis for Jenn Fairchild's manual acoustic analysis
-1.a - Read id.csv files from all WAV folder directories of the bat acoustic data from the Follo Forest 2021 and 2022 field seasons 
-1.b - Combine those id.csv's into one master csv file
-2.a - Subset to only include files that correspond to AUTO.ID.s of PIPY, PIPI, PINA, NoID, NYNO (Jenn) -J1 
-2.b - Subset to only include Myotis and Plecotus species as well as BABA (Mathilde) - M1 
-3.a - Subset J1 to only include data between May 15 and 27 June for both seasons  - J2 
-3.b - Subset M1 to only include the data from 2022 (whole season) - M2
-4.a - Copy files that match J2 into the external hard disk 
-4.b - Copy files that match M2 into the Project Largefile. 
 
 ## 2021 FIRST
-Step 1 - read the csv files of all bat acoustic data for both Follo Forest seasons and combine them 
+Step 1 - read the csv files of all bat acoustic data for both Eco Forest data and combine them 
 ```{r}
 
 ## 2021 
@@ -160,6 +152,7 @@ EF12cb
 EF12nb <- list.files(path=input12NB, pattern="Summary.txt", recursive = TRUE)
 EF12nb
 # "DATA/20.07.2023_EF12-NN-B/S4U12479_A_Summary.txt" "DATA/28.06.2023_EF12-NN-B/S4U12479_A_Summary.txt"
+
 
 
 

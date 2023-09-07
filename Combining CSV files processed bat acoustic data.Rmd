@@ -514,6 +514,8 @@ summary(big_data$AUTO.ID.)
 
 # write.csv(big_data, file = file.path(output_today, "EcoForest2023_AllProcessedBatDataCombined.csv")) 
 
+names(big_data)
+
 
 # Now remove noise 
 nn_big_data <- big_data %>%  filter(AUTO.ID. != "Noise") %>%  droplevels() 
@@ -525,7 +527,7 @@ summary(nn_big_data$AUTO.ID.)
 # BARBAR EPTNIL EPTSER MYOBEC MYOBRA MYODAS MYODAU MYOMYO MYOMYS MYONAT NYCLEI NYCNOC   NoID PIPPIP PIPPYG PLEAUR PLEAUS VESMUR 
 #    154   3676    437     18    826    527   2330     14   1586     35     26     64   8022      6     25    160     19      5 
 
-# write.csv(big_data, file = file.path(output_today, "EcoForest2023_NO_NOISE_AllProcessedBatDataCombined.csv")) 
+ # write.csv(nn_big_data, file = file.path(output_today, "EcoForest2023_NO_NOISE_AllProcessedBatDataCombined.csv")) 
 
 
 
