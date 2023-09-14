@@ -27,6 +27,7 @@ library(renv)
 library(stringr)
 library(beepr)
 
+
 getwd()
 # "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
 
