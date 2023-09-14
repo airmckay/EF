@@ -1,0 +1,287 @@
+---
+title: "SummarizingProcessedData"
+output: html_document
+date: "2023-09-14"
+---
+
+
+```{r}
+
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+
+## Import the processed data with site and plot type columns added by Jackson 
+bats <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/BigBat3ColumnsAdded.xlsx")
+
+
+getwd()
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
+
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs"
+
+file.name <- "OverviewProcessedBatData"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+
+```
+
+
+# Exploring "bats" 
+```{r}
+## Format the dataset
+names(bats)
+#  [1] "...1"          "INDIR"         "OUTDIR"        "FOLDER"        "IN.FILE"       "CHANNEL"       "OFFSET"       
+#  [8] "DURATION"      "OUT.FILE.FS"   "OUT.FILE.ZC"   "DATE"          "TIME"          "HOUR"          "DATE.12"      
+# [15] "TIME.12"       "HOUR.12"       "AUTO.ID."      "PULSES"        "MATCHING"      "MATCH.RATIO"   "MARGIN"       
+# [22] "ALTERNATE.1"   "ALTERNATE.2"   "N"             "Fc"            "Sc"            "Dur"           "Fmax"         
+# [29] "Fmin"          "Fmean"         "TBC"           "Fk"            "Tk"            "S1"            "Tc"           
+# [36] "Qual"          "FILES"         "MANUAL.ID"     "ORGID"         "USERID"        "REVIEW.ORGID"  "REVIEW.USERID"
+# [43] "INPATHMD5"     "OUTPATHMD5FS"  "OUTPATHMD5ZC"  "DETECTOR"      "LOCATION"      "SITETYPE" 
+
+## That first column is an index column that is an artefact of importing into R ~ don't sweat it 
+## I am going to just grab the column I am most interested in summarizing for now. 
+
+bats1 <- bats %>% 
+  dplyr::select(c(OUTDIR, OUT.FILE.FS, 
+    DATE, TIME, HOUR, 
+    DATE.12, TIME.12, HOUR.12, 
+    AUTO.ID., 
+    PULSES, MATCHING, MATCH.RATIO, 
+    DETECTOR, LOCATION, SITETYPE)) %>% 
+  mutate(across(c(AUTO.ID., DETECTOR, LOCATION, SITETYPE), factor)) 
+
+summary(bats1)
+dim(bats1)
+# 17930    15
+
+summary(bats1$AUTO.ID.)
+# BARBAR EPTNIL EPTSER MYOBEC MYOBRA MYODAS MYODAU MYOMYO MYOMYS 
+#    154   3676    437     18    826    527   2330     14   1586 
+# MYONAT NYCLEI NYCNOC   NoID PIPPIP PIPPYG PLEAUR PLEAUS VESMUR 
+#     35     26     64   8022      6     25    160     19      5
+
+## How to share the effort between Emma and Jackson? 
+
+# If Jackson did all Myotis for example: 
+# 18 + 826 + 527 + 2330 + 14 + 1586 + 35 = 5336 bat passes 
+# 5336/17930 - 30% of the bat passes
+
+#These will *mostly* be easier but will still include other bat species so it is important be familiar with the other bat species because they will also appear in these files. 
+
+# 17390 - 5336 = 12054 bat passes for Emma, potentially. 
+
+head(bats1)
+# The date, time and hour columns got corrupted - back to the basics.
+
+bats <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/EcoForest2023_NO_NOISE_AllProcessedBatDataCombined.csv",   
+                 col_types = cols(...1 = col_skip()))
+
+# mutate(Site = factor(Site), 
+#                             SitePlot = factor(SitePlot), 
+#                             Plot = case_when(
+#                             str_detect(SitePlot, "-OB") ~ "Open",
+#   str_detect(SitePlot, "-CB") ~ "Canopy", 
+#   str_detect(SitePlot, "-IB") ~ "Interior"))
+
+head(bats$OUTDIR)
+# [1] "P:\\EcoForest\\Acoustics\\EF2-NN-B\\WAV"
+## Note that the double backslash in R becomes one backslash if printed so you will need to double it again! 
+
+incols <- c("folder", "project", "typedata", "siteinfo", "filetype")
+
+batsx <- bats %>% 
+  tidyr::separate(col = OUTDIR,
+                                        sep = "\\\\",
+                                       into = incols, 
+                                       remove = FALSE) 
+
+
+batsx1 <- batsx %>%   
+  dplyr::select(c(OUTDIR, OUT.FILE.FS, 
+    DATE, TIME, HOUR, 
+    DATE.12, TIME.12, HOUR.12, 
+    AUTO.ID., 
+    PULSES, MATCHING, MATCH.RATIO, 
+    siteinfo)) 
+
+incols <- c("site", "sitetype", "batdetector")
+
+batsx2 <- batsx1 %>% 
+  tidyr::separate(col = siteinfo,
+                                        sep = "-",
+                                       into = incols, 
+                                       remove = FALSE) 
+
+bats1 <- batsx2 %>%   
+  dplyr::select(c(OUTDIR, OUT.FILE.FS, 
+    DATE, TIME, HOUR, 
+    DATE.12, TIME.12, HOUR.12, 
+    AUTO.ID., 
+    PULSES, MATCHING, MATCH.RATIO, 
+    site, sitetype)) %>%  
+  mutate(across(c(AUTO.ID., site, sitetype), factor)) 
+
+## Need to also make a column where site and sitetype are combined!
+
+bats1$siteplot <- as.factor(paste0(bats1$site, "-",bats1$sitetype))  
+
+# summary(bats1)
+#     OUTDIR          OUT.FILE.FS             DATE           
+#  Length:17930       Length:17930       Min.   :2004-01-12  
+#  Class :character   Class :character   1st Qu.:2023-06-11  
+#  Mode  :character   Mode  :character   Median :2023-06-16  
+#                                        Mean   :2023-06-12  
+#                                        3rd Qu.:2023-06-24  
+#                                        Max.   :2023-07-23  
+#                                                            
+#      TIME               HOUR           DATE.12          
+#  Length:17930      Min.   : 0.000   Min.   :2004-01-11  
+#  Class1:hms        1st Qu.: 1.000   1st Qu.:2023-06-11  
+#  Class2:difftime   Median : 2.000   Median :2023-06-15  
+#  Mode  :numeric    Mean   : 5.718   Mean   :2023-06-12  
+#                    3rd Qu.: 3.000   3rd Qu.:2023-06-24  
+#                    Max.   :23.000   Max.   :2023-07-22  
+#                                                         
+#    TIME.12            HOUR.12         AUTO.ID.        PULSES     
+#  Length:17930      Min.   : 5.00   NoID   :8022   Min.   : 2.00  
+#  Class1:hms        1st Qu.:12.00   EPTNIL :3676   1st Qu.: 4.00  
+#  Class2:difftime   Median :13.00   MYODAU :2330   Median : 9.00  
+#  Mode  :numeric    Mean   :12.66   MYOMYS :1586   Mean   :12.73  
+#                    3rd Qu.:14.00   MYOBRA : 826   3rd Qu.:18.00  
+#                    Max.   :22.00   MYODAS : 527   Max.   :84.00  
+#                                    (Other): 963                  
+#     MATCHING       MATCH.RATIO          site      sitetype  
+#  Min.   : 0.000   Min.   :0.0000   EF12   :4868   CC: 6818  
+#  1st Qu.: 0.000   1st Qu.:0.0000   EF9    :4179   NN:11112  
+#  Median : 2.000   Median :0.3080   EF8    :2625             
+#  Mean   : 4.253   Mean   :0.3478   EF4    :1797             
+#  3rd Qu.: 7.000   3rd Qu.:0.6670   EF11   :1582             
+#  Max.   :52.000   Max.   :1.0000   EF6    :1145             
+#                                    (Other):1734             
+#     siteplot   
+#  EF12_CC:3393  
+#  EF9_NN :2992  
+#  EF8_NN :2237  
+#  EF12_NN:1475  
+#  EF11_NN:1390  
+#  EF9_CC :1187  
+#  (Other):5256  
+
+dim(bats1)
+# 17930    14
+
+kbl(summarize( bats1, type = "factor", variables = "AUTO.ID."), 
+    caption = "EcoForest Bat Data Summary by Auto.ID - Noise excluded")  %>%  kable_styling()
+
+```
+
+
+## Plot it 
+```{r}
+summary(bats1$DATE)
+#         Min.      1st Qu.       Median         Mean      3rd Qu. 
+# "2004-01-12" "2023-06-11" "2023-06-16" "2023-06-12" "2023-06-24" 
+#         Max. 
+# "2023-07-23" 
+
+# Corrupted dates:(( 
+
+## For now, I will just filter these out:
+batsf <- bats1 %>% filter(DATE> "2023-05-01")
+dim(batsf)
+# 17914    14
+# 17930 - 17914 = 16 dates that are implausible. Where are they? 
+
+qc <-  bats1 %>% filter(DATE< "2023-05-01") %>% droplevels()
+summary(qc) # From EF12-CC
+summary(qc$AUTO.ID.)
+
+summary(bats1$siteplot)
+# EPTNIL NYCLEI   NoID 
+#      3      1     12 
+
+
+##  3393 recordings from EF12-CC, I would be inclined to just drop these recordings.... or give them a false date? 
+
+ggplot(batsf) + 
+  geom_count(aes(x = DATE, y = sitetype), 
+             color = "orange", alpha = 0.8) + 
+  dark_mode() + ylab("") + xlab("Night in season") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of bat passes recorded per date per site type, noise excluded")
+
+ggplot(batsf) + 
+  geom_point(aes(x = DATE,), stat = "count" , 
+             color = "orange", alpha = 0.8, size = 3) + 
+  facet_wrap(~sitetype) + 
+  dark_mode() + ylab("") + xlab("Night in season") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of bat passes recorded per date per site type, noise excluded")
+
+
+colourCount = length(unique(batsf$AUTO.ID.))
+getPalette = colorRampPalette(brewer.pal(9, "BrBG"))
+ 
+
+ggplot(batsf) + 
+  geom_bar(aes(x = AUTO.ID.), stat = "count", fill=getPalette(colourCount)) + 
+  dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of activity across autoids")
+
+
+ggplot(batsf) + 
+  geom_bar(aes(x = AUTO.ID., fill= AUTO.ID.), stat = "count") + 
+  dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of activity across autoids") + 
+  facet_wrap(~sitetype, nrow = 2) 
+
+ggplot(batsf) + 
+  geom_bar(aes(x = site), stat = "count", fill = "turquoise", alpha = 0.5) + 
+  dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of bat passes between sites") + 
+  facet_wrap(~sitetype, nrow = 2) 
+
+ggplot(batsf) + 
+  geom_bar(aes(x = site, fill = sitetype), stat = "count", alpha = 0.5, position = "dodge") + 
+  scale_colour_manual(values = c("turquoise", "coral")) +
+  dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of bat passes between sites") + labs(fill = "Site type")
+
+
+## Remove NoID and see what it looks like 
+
+nbatsf <- batsf %>% filter(AUTO.ID. != "NoID") %>% droplevels()
+colourCount = length(unique(nbatsf$AUTO.ID.))
+getPalette = colorRampPalette(brewer.pal(9, "BrBG"))
+
+
+ggplot(nbatsf) + 
+  geom_bar(aes(x = AUTO.ID.), stat = "count", fill=getPalette(colourCount)) + 
+  dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of activity across autoids")
+
+```
+
