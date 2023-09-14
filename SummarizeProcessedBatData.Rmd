@@ -201,7 +201,7 @@ kbl(summarize( bats1, type = "factor", variables = "AUTO.ID."),
 ```
 
 
-## Plot it 
+## Weird dates 
 ```{r}
 summary(bats1$DATE)
 #         Min.      1st Qu.       Median         Mean      3rd Qu. 
@@ -228,6 +228,15 @@ summary(bats1$siteplot)
 
 ##  3393 recordings from EF12-CC, I would be inclined to just drop these recordings.... or give them a false date? 
 
+
+# Hello Emma! 
+
+
+```
+
+
+## Plotting 
+```{r}
 ggplot(batsf) + 
   geom_count(aes(x = DATE, y = sitetype), 
              color = "orange", alpha = 0.8) + 
@@ -282,6 +291,5 @@ ggplot(nbatsf) +
   geom_bar(aes(x = AUTO.ID.), stat = "count", fill=getPalette(colourCount)) + 
   dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
   ggtitle("Overview of activity across autoids")
-
 ```
 
