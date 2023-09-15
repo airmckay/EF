@@ -215,7 +215,7 @@ summary(bats1$DATE)
 batsf <- bats1 %>% filter(DATE> "2023-05-01")
 dim(batsf)
 # 17914    14
-# 17930 - 17914 = 16 dates that are implausible. Where are they? 
+# 17930 - 17914 = 16 observations that are implausible. Where are they? 
 
 qc <-  bats1 %>% filter(DATE< "2023-05-01") %>% droplevels()
 summary(qc) # From EF12-CC
