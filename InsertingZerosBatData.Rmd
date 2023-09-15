@@ -135,16 +135,9 @@ hrbrthemes::import_roboto_condensed()
  t <- batnights %>% filter(DATE.12 > "2023-05-01") # lost 5 nights 
  ggplot(t, aes(x=DATE.12, y=siteplot, fill=batpass)) +  geom_tile()
  # Lots of gaps here! I imagine most are true zeroes, but we still need to check. 
- # Noticve how EF4-CC and EF3-CC have a huge gap in July 
+ # Notice how EF4-CC and EF3-CC have a huge gap in July 
  
- # It easier to create an interactive version of this map and I highly recommend doing this one site a time as well (makes your eyes cross less)
- 
- #TEST  <- temp2 %>% filter(Site == c("P14", "C14", "MetA", "MetB")) %>% mutate(night = as.Date(night))
-
-#test <- TEST  %>% 
-#  mutate(text = paste0("Night: ", night , "\n", "Site: ", Site))
-
-
+ # It easier to inspect these patterns using an interactive version of this map and I highly recommend doing this one site a time as well (makes your eyes cross less)
 p <- ggplot(t, aes(x = DATE.12, y = siteplot, fill = batpass)) +
           geom_tile() +
            theme_ipsum()
@@ -152,7 +145,9 @@ p <- ggplot(t, aes(x = DATE.12, y = siteplot, fill = batpass)) +
 pp <- ggplotly(p)
 pp
 
-htmlwidgets::saveWidget(as_widget(pp), file.path(output_today, "index_EF_NightCheck.html")) 
+htmlwidgets::saveWidget(as_widget(pp), file.path(output_today, "index_EF_NightCheck.html")) # exporting the figure (optional)
+
+## Sitepairs 
 
 pEF9 <- t %>% filter(siteplot %in% c("EF9-NN", "EF9-CC")) %>% droplevels() %>% 
   ggplot(aes(x = DATE.12, y = siteplot, fill = batpass)) +
@@ -172,13 +167,20 @@ htmlwidgets::saveWidget(as_widget(pp), file.path(output_today,"index_EF9_NightCh
 
 ```
 
+## Next steps 
 
+To go forward, you need two datasets: 
 
-## Example code from a previous project - you will need to adapt this to your own data. 
-## Let me know when you get to this point and get confused / i realize it isn't easy for you to interpret scripts from a project you did not work on! 
+active.nights = a dataset with at least 3 columns: siteplot, date.12, active.night. Active.night should only hold the value "TRUE" to indicate that on a given date and night, the detector was actually present, active and working.If a detector was deployed but not active on a certain date then there should simply not be a row for that siteplot with that date in this dataset. You will mostly need to go through and insert rows for dates and siteplots to account for nights when a detector was active but did not record anything. 
+
+For equipment failures such as a tipped of detector (if this clearly impacted the recording abillities of the detector) or in the case of the detector with disrupted date/time settings,  you  may need to remove rows for dates when the detector collected a few bat passses but the recordings are no longer considered valid/part of the regular sampling effort (incomplete nights). 
+
+ 
 ################################################
 # Insert zero activity nights
 ################################################
+Example code from a previous project - you will need to adapt this to your own data. 
+Let me know when you get to this point and get confused / i realize it isn't easy for you to interpret scripts from a project you did not work on!
 
 ```{r}
 # dat <- bats
