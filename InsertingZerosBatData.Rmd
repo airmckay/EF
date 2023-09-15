@@ -171,9 +171,11 @@ htmlwidgets::saveWidget(as_widget(pp), file.path(output_today,"index_EF9_NightCh
 
 To go forward, you need two datasets: 
 
-active.nights = a dataset with at least 3 columns: siteplot, date.12, active.night. Active.night should only hold the value "TRUE" to indicate that on a given date and night, the detector was actually present, active and working.If a detector was deployed but not active on a certain date then there should simply not be a row for that siteplot with that date in this dataset. You will mostly need to go through and insert rows for dates and siteplots to account for nights when a detector was active but did not record anything. 
+*active.nights* = a dataset with at least 3 columns: siteplot, date.12, active.night. Active.night should only hold the value "TRUE" to indicate that on a given date and night, the detector was actually present, active and working.If a detector was deployed but not active on a certain date then there should simply not be a row for that siteplot with that date in this dataset. You will mostly need to go through and insert rows for dates and siteplots to account for nights when a detector was active but did not record anything. 
 
 For equipment failures such as a tipped of detector (if this clearly impacted the recording abillities of the detector) or in the case of the detector with disrupted date/time settings,  you  may need to remove rows for dates when the detector collected a few bat passses but the recordings are no longer considered valid/part of the regular sampling effort (incomplete nights). 
+
+*bats* = dataset of nightly aggregated bat data (for now, I recommend just aggregating all bats together regardless of autoid - we will have to redo this later to account for different species and behavior after manual id)
 
  
 ################################################
