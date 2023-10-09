@@ -23,6 +23,7 @@ library(vtable)
 library(ggdark)
 library(RColorBrewer)
 library(cowplot)
+library(readxl)
 
 ## Import the processed data with site and plot type columns added by Jackson 
 bats <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/BigBat3ColumnsAdded.xlsx")
@@ -193,11 +194,17 @@ bats1$siteplot <- as.factor(paste0(bats1$site, "-",bats1$sitetype))
 #  (Other):5256  
 
 dim(bats1)
-# 17930    14
+# 17930    15
 
+## Summary table of autoids 
 kbl(summarize( bats1, type = "factor", variables = "AUTO.ID."), 
     caption = "EcoForest Bat Data Summary by Auto.ID - Noise excluded")  %>%  kable_styling()
 
+## Export the csv with just this data  for inserting zeroes
+
+write.csv(bats1, file = file.path(output_today, "EcoForestBats_ForInsertingZeroes.csv"))
+output_today
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/OverviewProcessedBatData_2023-09-15/EcoForestBats_ForInsertingZeroes.csv"
 ```
 
 
