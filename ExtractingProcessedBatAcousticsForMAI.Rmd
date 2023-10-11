@@ -1,0 +1,677 @@
+---
+title: "Extract bat data for manual acoustic analysis"
+output: html_document
+date: "2023-10-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Extract processed bat acoustic data for manual acoustic analysis for Jackson and Emma's master theses - EcoForest 2023 
+
+1.- Read the file paths of all files that match the file name pattern for output .wav files (000.wav)
+2. - Subset data based on AutoIDs  
+3. - Copy files into folders based on the AutoIDs (not including NOISE) into the P: 
+
+
+# Prepare workspace and import data 
+```{r}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
+
+getwd()
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs"
+
+file.name <- "ExportingBatAcousticData"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+
+
+
+# This contains the metadata as well as the AUTOids for all the processed files 
+
+batmeta <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/EcoForest2023_NO_NOISE_AllProcessedBatDataCombined.csv", 
+     col_types = cols(...1 = col_skip()))
+# 17930 observations of 44 vars
+
+names(batmeta)
+#  [1] "INDIR"         "OUTDIR"        "FOLDER"        "IN.FILE"       "CHANNEL"       "OFFSET"        "DURATION"     
+#  [8] "OUT.FILE.FS"   "OUT.FILE.ZC"   "DATE"          "TIME"          "HOUR"          "DATE.12"       "TIME.12"      
+# [15] "HOUR.12"       "AUTO.ID."      "PULSES"        "MATCHING"      "MATCH.RATIO"   "MARGIN"        "ALTERNATE.1"  
+# [22] "ALTERNATE.2"   "N"             "Fc"            "Sc"            "Dur"           "Fmax"          "Fmin"         
+# [29] "Fmean"         "TBC"           "Fk"            "Tk"            "S1"            "Tc"            "Qual"         
+# [36] "FILES"         "MANUAL.ID"     "ORGID"         "USERID"        "REVIEW.ORGID"  "REVIEW.USERID" "INPATHMD5"    
+# [43] "OUTPATHMD5FS"  "OUTPATHMD5ZC" 
+
+# All raw and processed bat data located here 
+inputEF <-"P:/EcoForest/Acoustics"
+
+# This will select the file path of all processed bat acoustic files which always have this same file ending (000.wav)
+my_files <- list.files(path = inputEF, pattern="000.wav", recursive = TRUE) # This is going to take an eternity. 
+beep()
+
+# #For some reason - had trouble getting data from this folder! 
+# EF7CCB <- list.files(path = "P:/EcoForest/Acoustics/EF7-CC-B/WAV", pattern = "000.wav", recursive = TRUE) 
+# EF7CCBdf <- as.data.frame(EF7CCB)
+# # see down below how I fixed this.
+
+
+files_df <- as.data.frame(my_files)
+# 43494 files 
+
+#write.csv(files_df, file = file.path(output_today, "FilePathsALLProcessedBatData.csv"))
+# Short cut! 
+# stpred here for the next time so you do not have to find the file paths every time (it takes forever): 
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/ExportingBatAcousticData_2023-10-09"
+```
+
+## Create a list of file paths only for non noise files and then subset by autoid for copying into new folders 
+
+```{r}
+
+# Format the files_df and batmeta objects so it is possible to merge them with each other
+names(files_df)
+head(files_df)
+#                                                                my_files
+# 1 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_030000.wav
+# 2 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_040000.wav
+# 3 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_050000.wav
+# 4 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_060000.wav
+# 5 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_070000.wav
+# 6 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_080000.wav
+
+incols <- c("Site", "DATA", "Collection2", "Data", "Filename")
+
+files_df1 <- files_df %>% 
+  tidyr::separate(col = my_files,
+                                        sep = "/",
+                                       into = incols, 
+                                       remove = FALSE)
+head(files_df1)
+#                                                               my_files      Site DATA          Collection2 Data
+# 1 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_030000.wav EF11-CC-A DATA 19.07.2023_EF11-CC-A Data
+# 2 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_040000.wav EF11-CC-A DATA 19.07.2023_EF11-CC-A Data
+# 3 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_050000.wav EF11-CC-A DATA 19.07.2023_EF11-CC-A Data
+# 4 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_060000.wav EF11-CC-A DATA 19.07.2023_EF11-CC-A Data
+# 5 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_070000.wav EF11-CC-A DATA 19.07.2023_EF11-CC-A Data
+# 6 EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230629_080000.wav EF11-CC-A DATA 19.07.2023_EF11-CC-A Data
+#                       Filename
+# 1 S4A16276_20230629_030000.wav
+# 2 S4A16276_20230629_040000.wav
+# 3 S4A16276_20230629_050000.wav
+# 4 S4A16276_20230629_060000.wav
+# 5 S4A16276_20230629_070000.wav
+# 6 S4A16276_20230629_080000.wav 
+
+batmeta$Filename <- batmeta$OUT.FILE.FS
+
+head(files_df1$Filename)
+# [1] "S4A16276_20230629_030000.wav" "S4A16276_20230629_040000.wav"
+# [3] "S4A16276_20230629_050000.wav" "S4A16276_20230629_060000.wav"
+# [5] "S4A16276_20230629_070000.wav" "S4A16276_20230629_080000.wav"   
+
+head(batmeta$Filename)
+# [1] "S4U12454_20230625_020014_000.wav" "S4U12454_20230628_235920_000.wav"
+# [3] "S4U12454_20230625_234339_000.wav" "S4U12454_20230708_001208_000.wav"
+# [5] "S4U12454_20230615_015652_000.wav" "S4U12454_20230614_231148_000.wav"    
+
+filepaths <- files_df1 %>% select(Filename, my_files) %>% rename(filepaths = my_files) 
+
+
+bats <- left_join(batmeta, filepaths)
+head(bats)
+
+bats <- bats %>% mutate(full_filepath = paste(inputEF, filepaths, sep = "/"))
+
+head(bats$full_filepath)
+# [1] "P:/EcoForest/Acoustics/EF2-NN-B/WAV/28.06.2023_EF2-NN-B/Data/S4U12454_20230625_020014_000.wav"  ## Looking good! 
+
+
+## In the future - check for NAs 
+## For some reason, there were 98 files we later found that did not have a filepath - which means they were not found when I searched through the acoustics folder and collected all files with a 000.wav ending... 
+```
+
+
+## Subset by AUTOID and copy these files into their own folders 
+```{r}
+
+bats$AUTO.ID. <- as.factor(bats$AUTO.ID.)
+direcs <- levels(bats$AUTO.ID.) # eventual new directories 
+#  [1] "BARBAR" "EPTNIL" "EPTSER" "MYOBEC" "MYOBRA"
+#  [6] "MYODAS" "MYODAU" "MYOMYO" "MYOMYS" "MYONAT"
+# [11] "NYCLEI" "NYCNOC" "NoID"   "PIPPIP" "PIPPYG"
+# [16] "PLEAUR" "PLEAUS" "VESMUR"
+
+summary(bats$AUTO.ID.)
+# BARBAR EPTNIL EPTSER MYOBEC MYOBRA MYODAS 
+#    154   3676    437     18    826    527 
+# MYODAU MYOMYO MYOMYS MYONAT NYCLEI NYCNOC 
+#   2330     14   1586     35     26     64 
+#   NoID PIPPIP PIPPYG PLEAUR PLEAUS VESMUR 
+#   8022      6     25    160     19      5 
+
+# Store metadata separately 
+BARBAR <- bats %>% filter(AUTO.ID. == "BARBAR") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/BARBAR")
+write.csv(BARBAR, "P:/EcoForest/Acoustics_ManualAnalysis/BARBAR/BARBAR_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+BARBAR_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/BARBAR/WAV"
+BARBAR_my_files <- as.list(BARBAR$full_filepath)
+BARBAR_my_files_list <- unlist(BARBAR_my_files)# 
+head(BARBAR_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = BARBAR_my_files_list,
+           to = BARBAR_dir)
+ beep()
+ 
+################################################################
+
+EPTNIL <- bats %>% filter(AUTO.ID. == "EPTNIL") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/EPTNIL")
+write.csv(EPTNIL, "P:/EcoForest/Acoustics_ManualAnalysis/EPTNIL/EPTNIL_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+EPTNIL_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/EPTNIL/WAV"
+EPTNIL_my_files <- as.list(EPTNIL$full_filepath)
+EPTNIL_my_files_list <- unlist(EPTNIL_my_files)# 
+head(EPTNIL_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = EPTNIL_my_files_list,
+           to = EPTNIL_dir)
+ beep()
+ 
+################################################################
+
+EPTSER <- bats %>% filter(AUTO.ID. == "EPTSER") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/EPTSER/WAV")
+write.csv(EPTSER, "P:/EcoForest/Acoustics_ManualAnalysis/EPTSER/EPTSER_meta.csv")
+
+# Prepare to link and copy files to correct input and output directories 
+EPTSER_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/EPTSER/WAV"
+EPTSER_my_files <- as.list(EPTSER$full_filepath)
+EPTSER_my_files_list <- unlist(EPTSER_my_files)# 
+head(EPTSER_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = EPTSER_my_files_list,
+           to = EPTSER_dir)
+ beep()
+ 
+################################################################
+
+
+MYOBEC <- bats %>% filter(AUTO.ID. == "MYOBEC") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYOBEC/WAV")
+write.csv(MYOBEC, "P:/EcoForest/Acoustics_ManualAnalysis/MYOBEC/MYOBEC_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+MYOBEC_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/MYOBEC/WAV"
+MYOBEC_my_files <- as.list(MYOBEC$full_filepath)
+MYOBEC_my_files_list <- unlist(MYOBEC_my_files)#
+head(MYOBEC_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = MYOBEC_my_files_list,
+           to = MYOBEC_dir)
+ beep()
+ 
+################################################################
+
+MYODAS <- bats %>% filter(AUTO.ID. == "MYODAS") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYODAS/WAV")
+write.csv(MYODAS, "P:/EcoForest/Acoustics_ManualAnalysis/MYODAS/MYODAS_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+MYODAS_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/MYODAS/WAV"
+MYODAS_my_files <- as.list(MYODAS$full_filepath)
+MYODAS_my_files_list <- unlist(MYODAS_my_files)#
+head(MYODAS_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = MYODAS_my_files_list,
+           to = MYODAS_dir)
+ beep()
+ 
+################################################################
+
+MYODAU <- bats %>% filter(AUTO.ID. == "MYODAU") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYODAU/WAV")
+write.csv(MYODAU, "P:/EcoForest/Acoustics_ManualAnalysis/MYODAU/MYODAU_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+MYODAU_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/MYODAU/WAV"
+MYODAU_my_files <- as.list(MYODAU$full_filepath)
+MYODAU_my_files_list <- unlist(MYODAU_my_files)# 
+
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = MYODAU_my_files_list,
+           to = MYODAU_dir)
+ beep() 
+ 
+ ## 10 files failed to copy... 
+ 
+################################################################
+
+MYOMYO <- bats %>% filter(AUTO.ID. == "MYOMYO") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYOMYO/WAV")
+write.csv(MYOMYO, "P:/EcoForest/Acoustics_ManualAnalysis/MYOMYO/MYOMYO_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+MYOMYO_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/MYOMYO/WAV"
+MYOMYO_my_files <- as.list(MYOMYO$full_filepath)
+MYOMYO_my_files_list <- unlist(MYOMYO_my_files)# 154 elements
+head(MYOMYO_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = MYOMYO_my_files_list,
+           to = MYOMYO_dir)
+ beep()
+ 
+################################################################
+
+MYONAT <- bats %>% filter(AUTO.ID. == "MYONAT") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYONAT/WAV")
+write.csv(MYONAT, "P:/EcoForest/Acoustics_ManualAnalysis/MYONAT/MYONAT_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+MYONAT_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/MYONAT/WAV"
+MYONAT_my_files <- as.list(MYONAT$full_filepath)
+MYONAT_my_files_list <- unlist(MYONAT_my_files)# 154 elements
+head(MYONAT_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = MYONAT_my_files_list,
+           to = MYONAT_dir)
+ beep()
+ 
+################################################################
+
+NYCLEI <- bats %>% filter(AUTO.ID. == "NYCLEI") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NYCLEI/WAV")
+write.csv(NYCLEI, "P:/EcoForest/Acoustics_ManualAnalysis/NYCLEI/NYCLEI_meta.csv")
+
+# Prepare to link and copy files to correct input and output directories 
+NYCLEI_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NYCLEI/WAV"
+NYCLEI_my_files <- as.list(NYCLEI$full_filepath)
+NYCLEI_my_files_list <- unlist(NYCLEI_my_files)# 154 elements
+head(NYCLEI_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = NYCLEI_my_files_list,
+           to = NYCLEI_dir)
+ beep()
+ 
+################################################################
+
+NYCNOC <- bats %>% filter(AUTO.ID. == "NYCNOC") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NYCNOC/WAV")
+write.csv(NYCNOC, "P:/EcoForest/Acoustics_ManualAnalysis/NYCNOC/NYCNOC_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+NYCNOC_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NYCNOC/WAV"
+NYCNOC_my_files <- as.list(NYCNOC$full_filepath)
+NYCNOC_my_files_list <- unlist(NYCNOC_my_files)# 154 elements
+head(NYCNOC_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = NYCNOC_my_files_list,
+           to = NYCNOC_dir)
+ beep()
+ 
+ ## Check these 6 files: 
+#  Warning messages:
+# 1: In file.copy(from = NYCNOC_my_files_list, to = NYCNOC_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NYCNOC\WAV\NA: No such file or directory
+# 2: In file.copy(from = NYCNOC_my_files_list, to = NYCNOC_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NYCNOC\WAV\NA: No such file or directory
+# 3: In file.copy(from = NYCNOC_my_files_list, to = NYCNOC_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NYCNOC\WAV\NA: No such file or directory
+# 4: In file.copy(from = NYCNOC_my_files_list, to = NYCNOC_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NYCNOC\WAV\NA: No such file or directory
+# 5: In file.copy(from = NYCNOC_my_files_list, to = NYCNOC_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NYCNOC\WAV\NA: No such file or directory
+# 6: In file.copy(from = NYCNOC_my_files_list, to = NYCNOC_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NYCNOC\WAV\NA: No such file or directory
+ 
+################################################################
+
+NoID <- bats %>% filter(AUTO.ID. == "NoID") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV")
+write.csv(NoID, "P:/EcoForest/Acoustics_ManualAnalysis/NOID/NOID_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+NoID_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NoID/WAV"
+NoID_my_files <- as.list(NoID$full_filepath)
+NoID_my_files_list <- unlist(NoID_my_files)# 154 elements
+head(NoID_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = NoID_my_files_list,
+           to = NoID_dir)
+ beep()
+ 
+ # 48 files that did not copy over 
+ # 
+ # 48: In file.copy(from = NoID_my_files_list, to = NoID_dir) :
+ #  problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NoID\WAV\NA: No such file or directory
+ 
+################################################################
+
+PIPPIP <- bats %>% filter(AUTO.ID. == "PIPPIP") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/PIPPIP/WAV")
+write.csv(PIPPIP, "P:/EcoForest/Acoustics_ManualAnalysis/PIPPIP/PIPPIP_meta.csv")
+
+# Prepare to link and copy files to correct input and output directories 
+PIPPIP_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/PIPPIP/WAV"
+PIPPIP_my_files <- as.list(PIPPIP$full_filepath)
+PIPPIP_my_files_list <- unlist(PIPPIP_my_files)# 154 elements
+head(PIPPIP_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = PIPPIP_my_files_list,
+           to = PIPPIP_dir)
+ beep()
+ 
+ # Warning message:
+# In file.copy(from = PIPPIP_my_files_list, to = PIPPIP_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\PIPPIP\WAV\NA: No such file or directory
+
+ 
+################################################################
+
+PIPPYG <- bats %>% filter(AUTO.ID. == "PIPPYG") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/PIPPYG/WAV")
+write.csv(PIPPYG, "P:/EcoForest/Acoustics_ManualAnalysis/PIPPYG/PIPPYG_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+PIPPYG_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/PIPPYG/WAV"
+PIPPYG_my_files <- as.list(PIPPYG$full_filepath)
+PIPPYG_my_files_list <- unlist(PIPPYG_my_files)# 154 elements
+head(PIPPYG_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = PIPPYG_my_files_list,
+           to = PIPPYG_dir)
+
+ beep()
+ 
+ # Warning messages:
+# 1: In file.copy(from = PIPPYG_my_files_list, to = PIPPYG_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\PIPPYG\WAV\NA: No such file or directory
+# 2: In file.copy(from = PIPPYG_my_files_list, to = PIPPYG_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\PIPPYG\WAV\NA: No such file or directory
+# 3: In file.copy(from = PIPPYG_my_files_list, to = PIPPYG_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\PIPPYG\WAV\NA: No such file or directory
+# 4: In file.copy(from = PIPPYG_my_files_list, to = PIPPYG_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\PIPPYG\WAV\NA: No such file or directory
+ 
+################################################################
+
+PLEAUR <- bats %>% filter(AUTO.ID. == "PLEAUR") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/PLEAUR/WAV")
+write.csv(PLEAUR, "P:/EcoForest/Acoustics_ManualAnalysis/PLEAUR/PLEAUR_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+PLEAUR_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/PLEAUR/WAV"
+PLEAUR_my_files <- as.list(PLEAUR$full_filepath)
+PLEAUR_my_files_list <- unlist(PLEAUR_my_files)# 154 elements
+head(PLEAUR_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = PLEAUR_my_files_list,
+           to = PLEAUR_dir)
+ beep()
+ 
+################################################################
+
+PLEAUS <- bats %>% filter(AUTO.ID. == "PLEAUS") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/PLEAUS/WAV")
+write.csv(PLEAUS, "P:/EcoForest/Acoustics_ManualAnalysis/PLEAUS/PLEAUS_meta.csv")
+
+# Prepare to link and copy files to correct input and output directories 
+PLEAUS_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/PLEAUS/WAV"
+PLEAUS_my_files <- as.list(PLEAUS$full_filepath)
+PLEAUS_my_files_list <- unlist(PLEAUS_my_files)# 154 elements
+head(PLEAUS_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = PLEAUS_my_files_list,
+           to = PLEAUS_dir)
+ beep()
+ 
+#  Warning message:
+# In file.copy(from = PLEAUR_my_files_list, to = PLEAUR_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\PLEAUR\WAV\NA: No such file or directory
+ 
+################################################################
+
+VESMUR <- bats %>% filter(AUTO.ID. == "VESMUR") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/VESMUR/WAV")
+write.csv(VESMUR, "P:/EcoForest/Acoustics_ManualAnalysis/VESMUR/VESMUR_meta.csv")
+
+# Prepare to link and copy files to correct input and output directories 
+VESMUR_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/VESMUR/WAV"
+VESMUR_my_files <- as.list(VESMUR$full_filepath)
+VESMUR_my_files_list <- unlist(VESMUR_my_files)# 154 elements
+head(VESMUR_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = VESMUR_my_files_list,
+           to = VESMUR_dir)
+ beep()
+ 
+################################################################
+ 
+ 
+### Check the NAs that failed to copy over: 
+ 
+na_bat <- bats %>% filter(full_filepath == "P:/EcoForest/Acoustics/NA") 
+## All the NAs are from the same site, but both of the existing collection points... 
+# In theory, I should be able to recreate the file path 
+
+head(na_bat$FOLDER)
+# "DATA\\21.07.2023_EF7-CC-B\\Data"
+
+ incols <- c("DATA", "Collection", "Data")
+
+na_bat1 <- na_bat %>% 
+  tidyr::separate(col = FOLDER,
+                                        sep = "\\\\",
+                                       into = incols, 
+                                       remove = FALSE)
+
+na_bat2 <- na_bat1 %>% mutate(fix = case_when(
+  Collection == "21.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/21.07.2023_EF7-CC-B/Data",
+  Collection == "03.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/03.07.2023_EF7-CC-B/Data"))
+
+na_bat2 <- na_bat2 %>% mutate(fullpath = paste0(fix, "/", Filename)) 
+
+ 
+#For some reason - had trouble getting data from this folder! 
+EF7CCB <- list.files(path = "P:/EcoForest/Acoustics/EF7-CC-B/WAV", pattern = "000.wav", recursive = TRUE) 
+EF7CCBdf <- as.data.frame(EF7CCB) # 436 obs 
+EF7CCBdf <- EF7CCBdf %>% rename(Filename = EF7CCB) 
+# see down below how I fixed this.
+
+incols <- c("DATA", "Collection", "Data", "Filename")
+
+na_bat <- EF7CCBdf %>% 
+  tidyr::separate(col = Filename,
+                                        sep = "/",
+                                       into = incols, 
+                                       remove = TRUE)
+
+batmeta_EF7CCBdf1 <- batmeta %>% filter (str_detect(INDIR, pattern = "EF7-CC-B" )) # ## 97 observations 
+batmeta_EF7CCBdf1$Filename <- batmeta_EF7CCBdf1$OUT.FILE.FS
+
+na_bat1 <- left_join(na_bat, batmeta_EF7CCBdf1) # 
+na_bat2 <- na_bat1 %>% drop_na(AUTO.ID.) # here is the missing metadata for the NA files! 
+
+na_bat3 <- na_bat2 %>% mutate(fix = case_when(
+  Collection == "21.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/21.07.2023_EF7-CC-B/Data",
+  Collection == "03.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/03.07.2023_EF7-CC-B/Data"))
+
+na_bat4 <- na_bat3 %>% mutate(fullpath = paste0(fix, "/", Filename)) 
+
+
+######################################
+
+# 10 MYODAY Files 
+na_MYODAU <- na_bat4 %>% filter(AUTO.ID. == "MYODAU")
+write.csv(na_MYODAU, file = file.path(MYODAU_dir, "Missing_MYODAU_meta.csv")) 
+
+na_MYODAU_my_files  <- as.list(na_MYODAU$fullpath)
+na_MYODAU_my_files_list <- unlist(na_MYODAU_my_files)
+head(na_MYODAU_my_files_list)
+
+# Copy files that match the file paths into a new folder.
+file.copy(from = na_MYODAU_my_files_list,
+           to = MYODAU_dir)
+ beep()
+
+###################################### 
+
+# 6 NYCNOC Files 
+na_NYCNOC <- na_bat4 %>% filter(AUTO.ID. == "NYCNOC")
+write.csv(na_NYCNOC, file = file.path(NYCNOC_dir, "Missing_NYCNOC_meta.csv")) 
+
+na_NYCNOC_my_files  <- as.list(na_NYCNOC$fullpath)
+na_NYCNOC_my_files_list <- unlist(na_NYCNOC_my_files)
+head(na_NYCNOC_my_files_list)
+
+# Copy files that match the file paths into a new folder.
+file.copy(from = na_NYCNOC_my_files_list,
+           to = NYCNOC_dir)
+ beep()
+ 
+######################################
+ 
+  # 1 PIPPIP Files 
+na_PIPPIP <- na_bat4 %>% filter(AUTO.ID. == "PIPPIP")
+write.csv(na_PIPPIP, file = file.path(PIPPIP_dir, "Missing_PIPPIP_meta.csv")) 
+
+na_PIPPIP_my_files  <- as.list(na_PIPPIP$fullpath)
+na_PIPPIP_my_files_list <- unlist(na_PIPPIP_my_files)
+head(na_PIPPIP_my_files_list)
+
+# Copy files that match the file paths into a new folder.
+file.copy(from = na_PIPPIP_my_files_list,
+           to = PIPPIP_dir)
+ beep()
+ 
+######################################
+ 
+  # 4 PIPPYG Files 
+na_PIPPYG <- na_bat4 %>% filter(AUTO.ID. == "PIPPYG")
+write.csv(na_PIPPYG, file = file.path(PIPPYG_dir, "Missing_PIPPYG_meta.csv")) 
+
+na_PIPPYG_my_files  <- as.list(na_PIPPYG$fullpath)
+na_PIPPYG_my_files_list <- unlist(na_PIPPYG_my_files)
+head(na_PIPPYG_my_files_list)
+
+# Copy files that match the file paths into a new folder.
+file.copy(from = na_PIPPYG_my_files_list,
+           to = PIPPYG_dir)
+ beep()
+ 
+######################################
+ 
+# 1 PLEAUR Files 
+na_PLEAUR <- na_bat4 %>% filter(AUTO.ID. == "PLEAUR")
+write.csv(na_PLEAUR, file = file.path(PLEAUR_dir, "Missing_PLEAUR_meta.csv")) 
+
+na_PLEAUR_my_files  <- as.list(na_PLEAUR$fullpath)
+na_PLEAUR_my_files_list <- unlist(na_PLEAUR_my_files)
+head(na_PLEAUR_my_files_list)
+
+# Copy files that match the file paths into a new folder.
+file.copy(from = na_PLEAUR_my_files_list,
+           to = PLEAUR_dir)
+ beep()
+ 
+######################################
+ 
+# 4 NoID Files 
+na_NoID <- na_bat4 %>% filter(AUTO.ID. == "NoID")
+write.csv(na_NoID, file = file.path(NoID_dir, "Missing_NoID_meta.csv")) 
+
+na_NoID_my_files  <- as.list(na_NoID$fullpath)
+na_NoID_my_files_list <- unlist(na_NoID_my_files)
+head(na_NoID_my_files_list)
+
+# Copy files that match the file paths into a new folder.
+file.copy(from = na_NoID_my_files_list,
+           to = NoID_dir)
+ beep()
+ 
+######################################
+
+
+
+
+# 
+# # Prepare to link and copy files to correct input and output directories
+# test_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NA_bats/WAV"
+# test_my_files <- as.list(test$fullpath)
+# test_my_files_list <- unlist(test_my_files)#
+# head(test_my_files_list)
+# 
+# head(test_my_files_list)
+# 
+# # Copy files that match the file paths into a new folder.
+# file.copy(from = test_my_files_list,
+#            to = test_dir)
+#  beep()
+
+
+```
+
+## Check for duplicates in the mop up 
+```{r}
+
+# check_files <- list.files(path = "P:/EcoForest/Acoustics_ManualAnalysis/MYODAU/WAV", pattern="000.wav", recursive = TRUE) # This is going to take an eternity. 
+# beep()
+# 
+# 
+# check_df <- as.data.frame(check_files)
+# dim(check_df)
+# 
+# test <- distinct(check_df)
+# dim(test)
+# 
+# ## Good! 
+
+```
+
