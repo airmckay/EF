@@ -46,7 +46,7 @@ setwd(output_today)
 getwd()
 
 
-# Turbine locations
+# site locations
 tpt<- read.csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Location Data/Sites_31052023.csv", sep = ";")
 names(tpt)
 
@@ -100,16 +100,16 @@ class(dfsf)
 
 
 
-getwd()
+# getwd()
 # "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Location Data/DigitalPoints/MainSites_2023-05-31"
-st_write(dfsf,"EcoForestSitePlots.gpkg")
-
-# Export shape file
-writeOGR(dfutm, dsn= "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Location Data/DigitalPoints/MainSites_2023-05-31",
-     dataset_options="GPX_USE_EXTENSIONS=yes",layer="ESRIS Shapefile",driver="GPX", overwrite_layer = T)
-
-writeOGR(dfutm, dsn= "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Location Data/DigitalPoints/MainSites_2023-05-31/waypoints.gpx",
-     dataset_options="GPX_USE_EXTENSIONS=yes",layer="waypoints",driver="GPX", overwrite_layer = T) 
+# st_write(dfsf,"EcoForestSitePlots.gpkg")
+# 
+# # Export shape file
+# writeOGR(dfutm, dsn= "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Location Data/DigitalPoints/MainSites_2023-05-31",
+#      dataset_options="GPX_USE_EXTENSIONS=yes",layer="ESRIS Shapefile",driver="GPX", overwrite_layer = T)
+# 
+# writeOGR(dfutm, dsn= "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Location Data/DigitalPoints/MainSites_2023-05-31/waypoints.gpx",
+#      dataset_options="GPX_USE_EXTENSIONS=yes",layer="waypoints",driver="GPX", overwrite_layer = T) 
 
 
 
