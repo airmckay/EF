@@ -75,7 +75,7 @@ names(batmeta)
 inputEF <-"P:/EcoForest/Acoustics"
 
 # This will select the file path of all processed bat acoustic files which always have this same file ending (000.wav)
-my_files <- list.files(path = inputEF, pattern="000.wav", recursive = TRUE) # This is going to take an eternity. 
+#my_files <- list.files(path = inputEF, pattern="000.wav", recursive = TRUE) # This is going to take an eternity. 
 beep()
 
 # #For some reason - had trouble getting data from this folder! 
@@ -90,7 +90,7 @@ files_df <- as.data.frame(my_files)
 #write.csv(files_df, file = file.path(output_today, "FilePathsALLProcessedBatData.csv"))
 # Short cut! 
 # stpred here for the next time so you do not have to find the file paths every time (it takes forever): 
-# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/ExportingBatAcousticData_2023-10-09"
+files_df <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/ExportingBatAcousticData_2023-10-09/FilePathsALLProcessedBatData.csv")
 ```
 
 ## Create a list of file paths only for non noise files and then subset by autoid for copying into new folders 
@@ -247,6 +247,23 @@ file.copy(from = MYOBEC_my_files_list,
  beep()
  
 ################################################################
+ 
+MYOBRA <- bats %>% filter(AUTO.ID. == "MYOBRA") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYOBRA/WAV")
+write.csv(MYOBRA, "P:/EcoForest/Acoustics_ManualAnalysis/MYOBRA/MYOBRA_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+MYOBRA_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/MYOBRA/WAV"
+MYOBRA_my_files <- as.list(MYOBRA$full_filepath)
+MYOBRA_my_files_list <- unlist(MYOBRA_my_files)#
+head(MYOBRA_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = MYOBRA_my_files_list,
+           to = MYOBRA_dir)
+ beep()
+ 
+################################################################
 
 MYODAS <- bats %>% filter(AUTO.ID. == "MYODAS") %>% droplevels()
 dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYODAS/WAV")
@@ -300,6 +317,48 @@ file.copy(from = MYOMYO_my_files_list,
  beep()
  
 ################################################################
+ 
+ MYOMYS <- bats %>% filter(AUTO.ID. == "MYOMYS") %>% droplevels()
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYOMYS/WAV")
+write.csv(MYOMYS, "P:/EcoForest/Acoustics_ManualAnalysis/MYOMYS/MYOMYS_meta.csv") 
+
+# Prepare to link and copy files to correct input and output directories 
+MYOMYS_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/MYOMYS/WAV"
+MYOMYS_my_files <- as.list(MYOMYS$full_filepath)
+MYOMYS_my_files_list <- unlist(MYOMYS_my_files)#
+head(MYOMYS_my_files_list)
+
+# Copy files that match the file paths into a new folder. 
+file.copy(from = MYOMYS_my_files_list,
+           to = MYOMYS_dir)
+
+## There were 9 files that did not copy over: 
+## All from EF7-CC-B... 
+
+# Warning messages:
+# 1: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 2: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 3: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 4: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 5: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 6: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 7: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 8: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+# 9: In file.copy(from = MYOMYS_my_files_list, to = MYOMYS_dir) :
+#   problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\MYOMYS\WAV\NA: No such file or directory
+
+ beep()
+ 
+################################################################
+
 
 MYONAT <- bats %>% filter(AUTO.ID. == "MYONAT") %>% droplevels()
 dir.create("P:/EcoForest/Acoustics_ManualAnalysis/MYONAT/WAV")
