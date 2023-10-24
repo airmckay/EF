@@ -83,6 +83,88 @@ dim(my_df1)
 #write.csv(my_df1, file = file.path(output_today, "RawBirdData_allfilepaths.csv"))
 # 24.10.2023
 
+## Read in "RawBirdData_allfilepaths.csv" here 
+
+birds <- my_df1
+```
+
+## Make metadata columns from file paths 
+```{r}
+head(birds)
+#EF11-CC-A/DATA/19.07.2023_EF11-CC-A/Data/S4A16276_20230626_140601.wav
+
+
+
+# Feel free to use different terminology, this is just an easy solution for me but Jackson and Emma are free to use the syntax that works for them so long as it is clear and consistent. 
+incols <- c("SitePlot", "DATA", "Collection", "Data", "filename")
+
+birds1 <- birds %>% 
+  tidyr::separate(col = my_files,
+                                        sep = "/",
+                                       into = incols, 
+                                       remove = FALSE)
+
+birds2 <- birds1 %>% select(-c(DATA, Data)) 
+
+head(birds2$SitePlot)
+# [1] "EF11-CC-A" "EF11-CC-A" "EF11-CC-A" "EF11-CC-A" "EF11-CC-A" "EF11-CC-A"
+
+incols <- c("Site", "PlotType", "Avian")
+
+birds3 <- birds2 %>% 
+  tidyr::separate(col = SitePlot,
+                                        sep = "-",
+                                       into = incols, 
+                                       remove = FALSE)
+# A bit more tidying 
+birds3 <- birds3 %>% 
+  rename(filepath = my_files) %>% 
+  select(-Avian) %>% 
+  mutate(SitePlot = factor(SitePlot)) %>% 
+  mutate(Site = factor(Site)) %>% 
+  mutate(PlotType = factor(PlotType)) 
+  
+summary(birds3$SitePlot) 
+# EF11-CC-A EF11-NN-A EF12-CC-A EF12-NN-A  EF2-CC-A  EF2-NN-A  EF3-CC-A  EF3-NN-A  EF4-CC-A  EF4-NN-A 
+#       941       940       924       924       925       922       921       926       939       938 
+#  EF5-CC-A  EF5-NN-A  EF6-CC-A  EF6-NN-A  EF7-CC-A  EF7-NN-A  EF8-CC-A  EF8-NN-A  EF9-CC-A  EF9-NN-A 
+#       896       898       942       941       937       934       937       495       940       937 
+
+summary(birds3$Site) 
+# EF11 EF12  EF2  EF3  EF4  EF5  EF6  EF7  EF8  EF9 
+# 1881 1848 1847 1847 1877 1794 1883 1871 1432 1877 
+
+summary(birds3$PlotType) 
+#   CC   NN 
+# 9302 8855 
+
+## Check for duplicates 
+
+test <- unique(birds3$filename)
+# 18137 unique elements 
+# There are 18157 observations in birds3, so there are 20 duplicates somewhere. Lets find out where. 
+
+test_df <- as.data.frame(birds3$filename)
+test_df$filename <- test_df[,1]
+
+dups <- test_df [duplicated(test_df$filename),]
+
+dups_meta <- left_join(dups, birds3)
+
+test1 <- unique(dups_meta$filename)
+# There are 20 recordings from EF2-CC-A that were backed up twice under two different collections. 
+# The true collection for these recordings would have been "28.06" because the recordings are from before this date. 
+
+# Were there actual recordings collected from EF2-CC-A on 21.07.2023? Have these been lost in the backup process (human error, most likely me (Reed) 
+
+## Jackson, can you take a look into this?
 
 ```
 
+## Next steps: 
+
+- Look to see if there are raw data missing from EF2-CC-A 
+- Use the file name to create "detector" , "date" and "time" of recordings. 
+- Check that each SitePlot is associated with correct detector 
+- Look at how recordings are spaced out over time and space
+- Experiment with different ways of subsetting the data. 
