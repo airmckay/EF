@@ -164,7 +164,7 @@ test1 <- unique(dups_meta$filename)
 ## Next steps: 
 
 - Look to see if there are raw data missing from EF2-CC-A 
-- Use the file name to create "detector" , "date" and "time" of recordings. 
+- Use the file name to create "detector" , "date" and "time" of recordings columns. 
 - Check that each SitePlot is associated with correct detector 
 - Look at how recordings are spaced out over time and space
 - Experiment with different ways of subsetting the data. 
