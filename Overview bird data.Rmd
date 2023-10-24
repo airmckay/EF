@@ -1,0 +1,88 @@
+---
+title: "Overview bird data"
+output: html_document
+date: "2023-10-24"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Goals 
+
+- Read in all raw bird recordings collected in the summer of 2023 for the EcoForest project
+- Add metadata columns based on filenames and filepaths 
+- Send to Jackson 
+
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
+
+getwd()
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs"
+
+file.name <- "ExportingBirdAcousticData"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+
+```
+
+# Read all bird files 
+```{r}
+# All raw and processed bat data located here 
+inputEF <-"P:/EcoForest/Acoustics" # First do a practice run to see if a combination of patterns can be used
+
+# This will select the file path of all files that begin with S4A (bird acoustic data) 
+# Will need to filter out non - .wav files in the next step. 
+
+# This is going to take an eternity.
+
+my_files <- list.files(path = inputEF, pattern= "S4A", recursive = TRUE) 
+beep()
+
+head(my_files)
+
+my_df <- as.data.frame(my_files)
+dim(my_df)
+# [1] 18249     1
+
+## Remove any files that do not end in .wav 
+
+my_df1 <- my_df %>% filter(str_detect(my_files, ".wav"))
+dim(my_df1)
+# [1] 18157     1
+
+#write.csv(my_df1, file = file.path(output_today, "RawBirdData_allfilepaths.csv"))
+# 24.10.2023
+
+
+```
+
