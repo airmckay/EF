@@ -196,13 +196,37 @@ birds4 <- anti_join(birds3, dups_meta_sub) # 8137, lost the 20 duplicate observa
 # 
 # file.remove(deletethis) # done 
 
-
 ```
 
-## Next steps: 
 
-- Look to see if there are raw data missing from EF2-CC-A 
-- Use the file name to create "detector" , "date" and "time" of recordings columns. 
-- Check that each SitePlot is associated with correct detector 
-- Look at how recordings are spaced out over time and space
-- Experiment with different ways of subsetting the data. 
+```{r}
+summary(birds4$PlotType)
+#   CC   NN
+# 9282 8855
+
+summary(birds4$SitePlot)
+# EF11-CC-A EF11-NN-A EF12-CC-A EF12-NN-A  EF2-CC-A  EF2-NN-A  EF3-CC-A  EF3-NN-A  EF4-CC-A  EF4-NN-A  EF5-CC-A 
+#       941       940       924       924       905       922       921       926       939       938       896 
+#  EF5-NN-A  EF6-CC-A  EF6-NN-A  EF7-CC-A  EF7-NN-A  EF8-CC-A  EF8-NN-A  EF9-CC-A  EF9-NN-A 
+#       898       942       941       937       934       937       495       940       937
+
+# 18137 ten minute recordings 
+
+# Manual listening - 20 minutes of recording per SitePlot
+# 400/60
+# 6.7 hours of recordings to go through 
+
+incols <- c("detector", "date", "time.wav")
+
+birds5 <- birds4 %>% 
+  tidyr::separate(col = filename,
+                                        sep = "_",
+                                       into = incols, 
+                                       remove = FALSE)
+birds5$Date <- ymd(birds5$date)
+
+summary(birds5$Date)
+#         Min.      1st Qu.       Median         Mean      3rd Qu.         Max. 
+# "2023-06-05" "2023-06-20" "2023-06-30" "2023-06-30" "2023-07-10" "2023-07-23
+```
+
