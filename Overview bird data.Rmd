@@ -38,7 +38,7 @@ getwd()
 # "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
 
 ## Setup output directory 
-output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs"
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bird Acoustic Data/Outputs"
 
 file.name <- "ExportingBirdAcousticData"
 
@@ -58,26 +58,26 @@ output_today
 # Read all bird files 
 ```{r}
 # All raw and processed bat data located here 
-inputEF <-"P:/EcoForest/Acoustics" # First do a practice run to see if a combination of patterns can be used
+# inputEF <-"P:/EcoForest/Acoustics" # First do a practice run to see if a combination of patterns can be used
 
 # This will select the file path of all files that begin with S4A (bird acoustic data) 
 # Will need to filter out non - .wav files in the next step. 
 
 # This is going to take an eternity.
 
-my_files <- list.files(path = inputEF, pattern= "S4A", recursive = TRUE) 
-beep()
-
-head(my_files)
-
-my_df <- as.data.frame(my_files)
-dim(my_df)
-# [1] 18249     1
-
-## Remove any files that do not end in .wav 
-
-my_df1 <- my_df %>% filter(str_detect(my_files, ".wav"))
-dim(my_df1)
+# my_files <- list.files(path = inputEF, pattern= "S4A", recursive = TRUE) 
+# beep()
+# 
+# head(my_files)
+# 
+# my_df <- as.data.frame(my_files)
+# dim(my_df)
+# # [1] 18249     1
+# 
+# ## Remove any files that do not end in .wav 
+# 
+# my_df1 <- my_df %>% filter(str_detect(my_files, ".wav"))
+# dim(my_df1)
 # [1] 18157     1
 
 #write.csv(my_df1, file = file.path(output_today, "RawBirdData_allfilepaths.csv"))
@@ -85,7 +85,9 @@ dim(my_df1)
 
 ## Read in "RawBirdData_allfilepaths.csv" here 
 
-birds <- my_df1
+birds <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/ExportingBirdAcousticData_2023-10-24/RawBirdData_allfilepaths.csv", 
+     col_types = cols(...1 = col_skip()))
+
 ```
 
 ## Make metadata columns from file paths 
@@ -152,12 +154,48 @@ dups <- test_df [duplicated(test_df$filename),]
 dups_meta <- left_join(dups, birds3)
 
 test1 <- unique(dups_meta$filename)
+head(test1)
+test2_df <- as.data.frame(test1)
+
 # There are 20 recordings from EF2-CC-A that were backed up twice under two different collections. 
 # The true collection for these recordings would have been "28.06" because the recordings are from before this date. 
 
 # Were there actual recordings collected from EF2-CC-A on 21.07.2023? Have these been lost in the backup process (human error, most likely me (Reed) 
 
-## Jackson, can you take a look into this?
+##
+
+ef2cca <- birds3 %>% filter(SitePlot == "EF2-CC-A") %>% 
+  droplevels() %>% 
+  mutate(Collection = factor(Collection)) # 925 obs
+ef2cca
+
+incols <- c("detector", "date", "time.wav")
+
+ef2cca <- ef2cca %>% 
+  tidyr::separate(col = filename,
+                                        sep = "_",
+                                       into = incols, 
+                                       remove = FALSE)
+library(lubridate)
+ef2cca$Date <- ymd(ef2cca$date)
+
+ggplot(ef2cca) + geom_bar(aes(x = Date, y = after_stat(count), fill = Collection), position = "stack") 
+
+# These files were simply backed up twice, once in each collection folder, so I can delete them from the 21.07.2023 collection folder and this should be alright. 
+
+dups_meta_sub <- dups_meta %>% filter(Collection == "21.07.2023_EF2-CC-A") %>% droplevels()
+
+birds4 <- anti_join(birds3, dups_meta_sub) # 8137, lost the 20 duplicate observations in the incorrect collection folder. Nice!
+
+#write.csv(birds4, file = file.path(output_today, "Overview_birdata_duplicates_removed.csv"))
+
+# Now also remove these duplicate files from in the folder. 
+# dups_meta_sub$fullfilepath <- paste0("P:/EcoForest/Acoustics/", dups_meta_sub$filepath)
+# 
+# deletethis <- dups_meta_sub$fullfilepath 
+# 
+# file.remove(deletethis) # done 
+
 
 ```
 
