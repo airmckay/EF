@@ -210,9 +210,8 @@ na_bat4 <- na_bat3 %>% mutate(fullpath = paste0(fix, "/", Filename))
 names(bats)
 names(na_bat5)
 na_bat5 <- na_bat4 %>% select(-c(DATA, Collection, Data, fix))
-na_bat5$full_filepath <- paste0(na_bat5$OUTDIR, "/", na_bat5$Filename)
+na_bat5$full_filepath <- paste0(na_bat5$fullpath, "/", na_bat5$Filename)
 head(na_bat5$full_filepath)
-na_bat5$full_filepath <- gsub("\\\\", "/", na_bat5$full_filepath)
 
 bats1 <- full_join(bats, na_bat5) # 18027 obs 
 bats1 # now the missing NAs are added. 
@@ -523,34 +522,18 @@ NoID1 <- NoID %>%
  noid_nn <- NoID1 %>% filter(str_detect(Site, pattern = "NN"))
  noid_nn$Site <- factor(noid_nn$Site)
  table(noid_nn$Site)
- # EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B 
- #      824       725        57        19       297       172       434       143       332 
- # EF9-NN-B 
- #     1584 
+# EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B 
+#       456       395        31        12       175        97       216        81       185 
+#  EF9-NN-B 
+#       852 
  
  # Select 2500 random files from this 
  noid_nn1 <- noid_nn %>% sample_n(2500)
  table(noid_nn1$Site)
-# EF11-CC-B EF12-CC-B  EF2-CC-B  EF3-CC-B  EF4-CC-B  EF5-CC-B  EF6-CC-B  EF8-CC-B  EF9-CC-B 
-#       108      1915         9        18       442        95        21       207       572
+# EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B  EF9-NN-B 
+#       456       395        31        12       175        97       216        81       185       852 
  
- ## Where is site 7? 
-incols <- c("Site", "WAV", "Collection", "Data", "Filename")
 
-bats1 <- bats %>% 
-  tidyr::separate(col = filepaths,
-                                        sep = "/",
-                                       into = incols, 
-                                       remove = FALSE)
-bats1$Site <- factor(bats1$Site)
-EF7CC <- bats1 %>% filter(str_detect(Site, pattern = "EF7")) #670 files for both sites
-
-## MISSING DATA FROM EF7CC
-
-EF7CC <- list.files
- 
-  
- 
 #dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN")
 #write.csv(noid_nn1, "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN/NOID_subNN_meta.csv") 
  
@@ -567,29 +550,30 @@ head(NoID_NN_my_files_list)
  noid_cc <- NoID1 %>% filter(str_detect(Site, pattern = "CC"))
  noid_cc$Site <- factor(noid_cc$Site)
  table(noid_cc$Site)
- # EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B 
- #      824       725        57        19       297       172       434       143       332 
- # EF9-NN-B 
- #     1584 
+# EF11-CC-B EF12-CC-B  EF2-CC-B  EF3-CC-B  EF4-CC-B  EF5-CC-B  EF6-CC-B  EF8-CC-B  EF9-CC-B 
+#       108      1915         9        18       442        95        21       207       572 
+ 
+  ## Where is site 7? 
+
+## MISSING DATA FROM EF7CC
+## Deal with this later 
  
  # Select 2500 random files from this 
- noid_nn1 <- noid_nn %>% sample_n(2500)
- table(noid_nn1$Site)
- # EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B 
- #      456       395        31        12       175        97       216        81       185 
- # EF9-NN-B 
- #      852 
+ noid_cc1 <- noid_cc %>% sample_n(2480) # Do 20 NoIDS from site 7 later 
+ table(noid_cc1$Site)
+# EF11-CC-B EF12-CC-B  EF2-CC-B  EF3-CC-B  EF4-CC-B  EF5-CC-B  EF6-CC-B  EF8-CC-B  EF9-CC-B 
+#        75      1407         9        15       326        72        17       145       414 
  
-#dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN")
-#write.csv(noid_nn1, "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN/NOID_subNN_meta.csv") 
+dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_CC_missingEF7")
+write.csv(noid_cc1, "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_CC_missingEF7/NOID_subCC_meta.csv") 
  
-NoID_NN_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN"
-NoID_NN_my_files <- as.list(noid_nn1$full_filepath) 
-NoID_NN_my_files_list <- unlist(NoID_NN_my_files)# 2500 elements
-head(NoID_NN_my_files_list)
+NoID_CC_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_CC_missingEF7"
+NoID_CC_my_files <- as.list(noid_cc1$full_filepath) 
+NoID_CC_my_files_list <- unlist(NoID_CC_my_files)# 2480 elements
+head(NoID_CC_my_files_list)
 
-file.copy(from = NoID_NN_my_files_list,
-           to = NoID_NN_dir)
+file.copy(from = NoID_CC_my_files_list,
+           to = NoID_CC_dir)
  beep()
 
 ################################################################
