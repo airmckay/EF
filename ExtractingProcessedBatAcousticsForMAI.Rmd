@@ -84,13 +84,16 @@ beep()
 # # see down below how I fixed this.
 
 
-files_df <- as.data.frame(my_files)
+# files_df <- as.data.frame(my_files)
 # 43494 files 
 
 #write.csv(files_df, file = file.path(output_today, "FilePathsALLProcessedBatData.csv"))
 # Short cut! 
 # stpred here for the next time so you do not have to find the file paths every time (it takes forever): 
 files_df <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/ExportingBatAcousticData_2023-10-09/FilePathsALLProcessedBatData.csv")
+
+
+
 ```
 
 ## Create a list of file paths only for non noise files and then subset by autoid for copying into new folders 
@@ -155,8 +158,68 @@ head(bats$full_filepath)
 # [1] "P:/EcoForest/Acoustics/EF2-NN-B/WAV/28.06.2023_EF2-NN-B/Data/S4U12454_20230625_020014_000.wav"  ## Looking good! 
 
 
-## In the future - check for NAs 
-## For some reason, there were 98 files we later found that did not have a filepath - which means they were not found when I searched through the acoustics folder and collected all files with a 000.wav ending... 
+### Check the NAs that failed to copy over: 
+na_bat <- bats %>% filter(full_filepath == "P:/EcoForest/Acoustics/NA") 
+## All the NAs are from the same site, but both of the existing collection points... 
+# In theory, I should be able to recreate the file path 
+
+head(na_bat$FOLDER)
+# "DATA\\21.07.2023_EF7-CC-B\\Data"
+
+ incols <- c("DATA", "Collection", "Data")
+
+na_bat1 <- na_bat %>% 
+  tidyr::separate(col = FOLDER,
+                                        sep = "\\\\",
+                                       into = incols, 
+                                       remove = FALSE)
+
+na_bat2 <- na_bat1 %>% mutate(fix = case_when(
+  Collection == "21.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/21.07.2023_EF7-CC-B/Data",
+  Collection == "03.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/03.07.2023_EF7-CC-B/Data"))
+
+na_bat2 <- na_bat2 %>% mutate(fullpath = paste0(fix, "/", Filename)) 
+
+ 
+#For some reason - had trouble getting data from this folder! 
+EF7CCB <- list.files(path = "P:/EcoForest/Acoustics/EF7-CC-B/WAV", pattern = "000.wav", recursive = TRUE) 
+EF7CCBdf <- as.data.frame(EF7CCB) # 436 obs 
+EF7CCBdf <- EF7CCBdf %>% rename(Filename = EF7CCB) 
+# see down below how I fixed this.
+
+incols <- c("DATA", "Collection", "Data", "Filename")
+
+na_bat <- EF7CCBdf %>% 
+  tidyr::separate(col = Filename,
+                                        sep = "/",
+                                       into = incols, 
+                                       remove = TRUE)
+
+batmeta_EF7CCBdf1 <- batmeta %>% filter (str_detect(INDIR, pattern = "EF7-CC-B" )) # ## 97 observations 
+batmeta_EF7CCBdf1$Filename <- batmeta_EF7CCBdf1$OUT.FILE.FS
+
+na_bat1 <- left_join(na_bat, batmeta_EF7CCBdf1) # 
+na_bat2 <- na_bat1 %>% drop_na(AUTO.ID.) # here is the missing metadata for the NA files! 
+
+na_bat3 <- na_bat2 %>% mutate(fix = case_when(
+  Collection == "21.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/21.07.2023_EF7-CC-B/Data",
+  Collection == "03.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/03.07.2023_EF7-CC-B/Data"))
+
+na_bat4 <- na_bat3 %>% mutate(fullpath = paste0(fix, "/", Filename)) 
+
+names(bats)
+names(na_bat5)
+na_bat5 <- na_bat4 %>% select(-c(DATA, Collection, Data, fix))
+na_bat5$full_filepath <- paste0(na_bat5$OUTDIR, "/", na_bat5$Filename)
+head(na_bat5$full_filepath)
+na_bat5$full_filepath <- gsub("\\\\", "/", na_bat5$full_filepath)
+
+bats1 <- full_join(bats, na_bat5) # 18027 obs 
+bats1 # now the missing NAs are added. 
+
+
+
+## Need to see if these have been excluded from the rest of the manual acoustic analysis... 
 ```
 
 
@@ -446,6 +509,89 @@ file.copy(from = NoID_my_files_list,
  # 48: In file.copy(from = NoID_my_files_list, to = NoID_dir) :
  #  problem copying P:\EcoForest\Acoustics\NA to P:\EcoForest\Acoustics_ManualAnalysis\NoID\WAV\NA: No such file or directory
  
+ ## Create a subset for Emma to classify which are 2500 random files from CC and NN 
+ head(NoID$filepaths)
+ 
+ incols <- c("Site", "WAV", "Collection", "Data", "Filename")
+
+NoID1 <- NoID %>% 
+  tidyr::separate(col = filepaths,
+                                        sep = "/",
+                                       into = incols, 
+                                       remove = FALSE)
+## NN sites 
+ noid_nn <- NoID1 %>% filter(str_detect(Site, pattern = "NN"))
+ noid_nn$Site <- factor(noid_nn$Site)
+ table(noid_nn$Site)
+ # EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B 
+ #      824       725        57        19       297       172       434       143       332 
+ # EF9-NN-B 
+ #     1584 
+ 
+ # Select 2500 random files from this 
+ noid_nn1 <- noid_nn %>% sample_n(2500)
+ table(noid_nn1$Site)
+# EF11-CC-B EF12-CC-B  EF2-CC-B  EF3-CC-B  EF4-CC-B  EF5-CC-B  EF6-CC-B  EF8-CC-B  EF9-CC-B 
+#       108      1915         9        18       442        95        21       207       572
+ 
+ ## Where is site 7? 
+incols <- c("Site", "WAV", "Collection", "Data", "Filename")
+
+bats1 <- bats %>% 
+  tidyr::separate(col = filepaths,
+                                        sep = "/",
+                                       into = incols, 
+                                       remove = FALSE)
+bats1$Site <- factor(bats1$Site)
+EF7CC <- bats1 %>% filter(str_detect(Site, pattern = "EF7")) #670 files for both sites
+
+## MISSING DATA FROM EF7CC
+
+EF7CC <- list.files
+ 
+  
+ 
+#dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN")
+#write.csv(noid_nn1, "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN/NOID_subNN_meta.csv") 
+ 
+NoID_NN_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN"
+NoID_NN_my_files <- as.list(noid_nn1$full_filepath) 
+NoID_NN_my_files_list <- unlist(NoID_NN_my_files)# 2500 elements
+head(NoID_NN_my_files_list)
+
+# file.copy(from = NoID_NN_my_files_list,
+#            to = NoID_NN_dir)
+#  beep()
+#  
+## Now for CC sites 
+ noid_cc <- NoID1 %>% filter(str_detect(Site, pattern = "CC"))
+ noid_cc$Site <- factor(noid_cc$Site)
+ table(noid_cc$Site)
+ # EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B 
+ #      824       725        57        19       297       172       434       143       332 
+ # EF9-NN-B 
+ #     1584 
+ 
+ # Select 2500 random files from this 
+ noid_nn1 <- noid_nn %>% sample_n(2500)
+ table(noid_nn1$Site)
+ # EF11-NN-B EF12-NN-B  EF2-NN-B  EF3-NN-B  EF4-NN-B  EF5-NN-B  EF6-NN-B  EF7-NN-B  EF8-NN-B 
+ #      456       395        31        12       175        97       216        81       185 
+ # EF9-NN-B 
+ #      852 
+ 
+#dir.create("P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN")
+#write.csv(noid_nn1, "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN/NOID_subNN_meta.csv") 
+ 
+NoID_NN_dir<- "P:/EcoForest/Acoustics_ManualAnalysis/NOID/WAV_subset_NN"
+NoID_NN_my_files <- as.list(noid_nn1$full_filepath) 
+NoID_NN_my_files_list <- unlist(NoID_NN_my_files)# 2500 elements
+head(NoID_NN_my_files_list)
+
+file.copy(from = NoID_NN_my_files_list,
+           to = NoID_NN_dir)
+ beep()
+
 ################################################################
 
 PIPPIP <- bats %>% filter(AUTO.ID. == "PIPPIP") %>% droplevels()
@@ -554,55 +700,7 @@ file.copy(from = VESMUR_my_files_list,
 ################################################################
  
  
-### Check the NAs that failed to copy over: 
- 
-na_bat <- bats %>% filter(full_filepath == "P:/EcoForest/Acoustics/NA") 
-## All the NAs are from the same site, but both of the existing collection points... 
-# In theory, I should be able to recreate the file path 
 
-head(na_bat$FOLDER)
-# "DATA\\21.07.2023_EF7-CC-B\\Data"
-
- incols <- c("DATA", "Collection", "Data")
-
-na_bat1 <- na_bat %>% 
-  tidyr::separate(col = FOLDER,
-                                        sep = "\\\\",
-                                       into = incols, 
-                                       remove = FALSE)
-
-na_bat2 <- na_bat1 %>% mutate(fix = case_when(
-  Collection == "21.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/21.07.2023_EF7-CC-B/Data",
-  Collection == "03.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/03.07.2023_EF7-CC-B/Data"))
-
-na_bat2 <- na_bat2 %>% mutate(fullpath = paste0(fix, "/", Filename)) 
-
- 
-#For some reason - had trouble getting data from this folder! 
-EF7CCB <- list.files(path = "P:/EcoForest/Acoustics/EF7-CC-B/WAV", pattern = "000.wav", recursive = TRUE) 
-EF7CCBdf <- as.data.frame(EF7CCB) # 436 obs 
-EF7CCBdf <- EF7CCBdf %>% rename(Filename = EF7CCB) 
-# see down below how I fixed this.
-
-incols <- c("DATA", "Collection", "Data", "Filename")
-
-na_bat <- EF7CCBdf %>% 
-  tidyr::separate(col = Filename,
-                                        sep = "/",
-                                       into = incols, 
-                                       remove = TRUE)
-
-batmeta_EF7CCBdf1 <- batmeta %>% filter (str_detect(INDIR, pattern = "EF7-CC-B" )) # ## 97 observations 
-batmeta_EF7CCBdf1$Filename <- batmeta_EF7CCBdf1$OUT.FILE.FS
-
-na_bat1 <- left_join(na_bat, batmeta_EF7CCBdf1) # 
-na_bat2 <- na_bat1 %>% drop_na(AUTO.ID.) # here is the missing metadata for the NA files! 
-
-na_bat3 <- na_bat2 %>% mutate(fix = case_when(
-  Collection == "21.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/21.07.2023_EF7-CC-B/Data",
-  Collection == "03.07.2023_EF7-CC-B" ~ "P:/EcoForest/Acoustics/EF7-CC-B/WAV/DATA/03.07.2023_EF7-CC-B/Data"))
-
-na_bat4 <- na_bat3 %>% mutate(fullpath = paste0(fix, "/", Filename)) 
 
 
 ######################################
