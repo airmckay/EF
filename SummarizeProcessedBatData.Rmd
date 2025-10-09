@@ -27,7 +27,7 @@ library(readxl)
 
 ## Import the processed data with site and plot type columns added by Jackson 
 bats <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/BigBat3ColumnsAdded.xlsx")
-
+#17930 obs of 48 vars
 
 getwd()
 # "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
@@ -101,6 +101,12 @@ head(bats1)
 
 bats <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/EcoForest2023_NO_NOISE_AllProcessedBatDataCombined.csv",   
                  col_types = cols(...1 = col_skip()))
+
+nbats <- read.csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/EcoForest2023_AllProcessedBatDataCombined.csv")
+
+nbats$AUTO.ID. <- factor(nbats$AUTO.ID.)
+summary(nbats$AUTO.ID.) 
+# 23824    noise recordings   
 
 # mutate(Site = factor(Site), 
 #                             SitePlot = factor(SitePlot), 
@@ -191,19 +197,105 @@ bats1$siteplot <- as.factor(paste0(bats1$site, "-",bats1$sitetype))
 #  EF12_NN:1475  
 #  EF11_NN:1390  
 #  EF9_CC :1187  
-#  (Other):5256  
+#  (Other):5256 
 
-dim(bats1)
+
+### Do the same for nbats (with noise files) to get a sense for how Noise was distributed 
+incols <- c("folder", "project", "typedata", "siteinfo", "filetype")
+
+nbatsx <- nbats %>% 
+  tidyr::separate(col = OUTDIR,
+                                        sep = "\\\\",
+                                       into = incols, 
+                                       remove = FALSE) 
+
+
+nbatsx1 <- nbatsx %>%   
+  dplyr::select(c(OUTDIR, OUT.FILE.FS, 
+    DATE, TIME, HOUR, 
+    DATE.12, TIME.12, HOUR.12, 
+    AUTO.ID., 
+    PULSES, MATCHING, MATCH.RATIO, 
+    siteinfo)) 
+
+incols <- c("site", "sitetype", "batdetector")
+
+nbatsx2 <- nbatsx1 %>% 
+  tidyr::separate(col = siteinfo,
+                                        sep = "-",
+                                       into = incols, 
+                                       remove = FALSE) 
+
+nbats1 <- nbatsx2 %>%   
+  dplyr::select(c(OUTDIR, OUT.FILE.FS, 
+    DATE, TIME, HOUR, 
+    DATE.12, TIME.12, HOUR.12, 
+    AUTO.ID., 
+    PULSES, MATCHING, MATCH.RATIO, 
+    site, sitetype)) %>%  
+  mutate(across(c(AUTO.ID., site, sitetype), factor)) 
+
+## Need to also make a column where site and sitetype are combined!
+
+nbats1$siteplot <- as.factor(paste0(nbats1$site, "-",nbats1$sitetype))  
+
+nbats.mat <- as.data.frame(table(nbats1$siteplot, nbats1$AUTO.ID.))
+colnames(nbats.mat) <- c("siteplot", "autoid", "count")
+
+ggplot(nbats.mat, aes(siteplot, autoid, fill = count))  + 
+  geom_tile(aes(color = autoid))
+
+
+custom_colors <- c("#40E0D0", "#D62728", "#D62728", "#1A55A3", "#1A55A3",
+                   "#1A55A3", "#1A55A3", "#1A55A3", "#1A55A3", "#1A55A3",
+                   "#FF69B4", "#FF69B4", "gray", "black", "#4CAF50",
+                   "#4CAF50", "skyblue", "skyblue", "purple")
+
+ggplot(nbats1, aes(x = siteplot, fill = AUTO.ID.)) +
+  geom_bar() + 
+  scale_fill_manual(values = custom_colors) +
+  theme_classic() 
+
+#there was a date error
+baddates <- nbats1 %>% filter(DATE < 2023-01-01) %>% droplevels()
+summary(baddates)
+summary(baddates$AUTO.ID.)
+# EPTNIL NYCLEI   NoID  Noise 
+#      3      1     12    324 
+nbaddates <-unique(factor(baddates$DATE)) 
+# 23 days 
+
+ggplot(nbats1 %>% filter(DATE > 2023-01-01), aes(x=DATE.12)) + 
+stat_count(geom = "point", aes(y = ..count..), size = 2, color = "orange") +  facet_wrap(~siteplot, ncol = 2) +
+theme_classic() 
+
+dim(nbats1)
+summary(nbats1$DATE.12)
 # 17930    15
+
+
+
+
 
 ## Summary table of autoids 
 kbl(summarize( bats1, type = "factor", variables = "AUTO.ID."), 
     caption = "EcoForest Bat Data Summary by Auto.ID - Noise excluded")  %>%  kable_styling()
 
+
+nbats$AUTO.ID. <- factor(nbats$AUTO.ID.)
+summary(nbats$AUTO.ID.) 
+# 23824    noise recordings   
+
+
+sitemap <- bats1 %>% 
+  dplyr::select(c(OUT.FILE.FS, site, sitetype, siteplot)) %>% distinct()
+
+
+
 ## Export the csv with just this data  for inserting zeroes
 
-write.csv(bats1, file = file.path(output_today, "EcoForestBats_ForInsertingZeroes.csv"))
-output_today
+# write.csv(bats1, file = file.path(output_today, "EcoForestBats_ForInsertingZeroes.csv"))
+# output_today
 # "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/OverviewProcessedBatData_2023-09-15/EcoForestBats_ForInsertingZeroes.csv"
 ```
 
