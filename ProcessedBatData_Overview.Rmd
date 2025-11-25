@@ -1,0 +1,168 @@
+---
+title: "ProcessedBatData_Overview"
+output: html_document
+date: "2025-11-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
+
+## Import the processed data with site and plot type columns added by Jackson 
+bats <- read_csv("P:/EcoForest/ProcessedAcoustics/ROutputs/CombineAutoIDs_2025-11-25/EcoForest2023_AllProcessedBatDataCombined.csv", col_types = cols(...1 = col_skip()))
+#17930 obs of 48 vars
+
+getwd()
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs"
+
+file.name <- "OverviewProcessedBatData"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs/OverviewProcessedBatData_2025-11-25"
+```
+
+
+```{r}
+names(bats)
+#  [1] "INDIR"         "OUTDIR"        "FOLDER"        "IN.FILE"       "CHANNEL"      
+#  [6] "OFFSET"        "DURATION"      "OUT.FILE.FS"   "OUT.FILE.ZC"   "DATE"         
+# [11] "TIME"          "HOUR"          "DATE.12"       "TIME.12"       "HOUR.12"      
+# [16] "AUTO.ID."      "PULSES"        "MATCHING"      "MATCH.RATIO"   "MARGIN"       
+# [21] "ALTERNATE.1"   "ALTERNATE.2"   "N"             "Fc"            "Sc"           
+# [26] "Dur"           "Fmax"          "Fmin"          "Fmean"         "TBC"          
+# [31] "Fk"            "Tk"            "S1"            "Tc"            "Qual"         
+# [36] "FILES"         "MANUAL.ID"     "ORGID"         "USERID"        "REVIEW.ORGID" 
+# [41] "REVIEW.USERID" "INPATHMD5"     "OUTPATHMD5FS"  "OUTPATHMD5ZC" 
+
+### Add site description metadata
+
+bb <- bats
+
+# Take the first 8 digits from IN.FILE
+bb %>%
+  mutate(DETECTOR = str_extract(IN.FILE, '\\S{8}'))
+
+names(bb)
+
+#### Add a new column for Location (EF#) and Site (CC or NN) ####
+# From 3-4 alphanumeric characters from EF [underscore boundary] in FOLDER
+# 4 non-space characters from N or C in FOLDER
+# -- COMBINE LATER
+bb %>%
+  mutate(LOCATION = word(FOLDER, 2, sep = "_"),
+         LOCATION = str_extract(LOCATION, '\\w{3,4}'))
+  mutate(SITETYPE = str_extract(FOLDER, '\\b[A-Z]{2}'))
+
+#### Successful Code ####
+bb3col <- bb %>%
+  dplyr::mutate(DETECTOR = str_extract(IN.FILE, '\\S{8}'),
+         LOCATION = word(FOLDER, 2, sep = "_"),
+         LOCATION = str_extract(LOCATION, '\\w{3,4}'),
+         SITETYPE = str_extract(FOLDER, '\\b[A-Z]{2}'))
+
+#visualize - success!!
+head(bb3col[,45:47])
+tail(bb3col[,45:47])
+
+names(bb3col)
+
+df <- bb3col %>% 
+  dplyr::mutate(site  = factor(LOCATION ), 
+                           DETECTOR = factor(DETECTOR), 
+                           sitetype = factor(SITETYPE), 
+                           autoid = factor(AUTO.ID.),
+                            filename = OUT.FILE.FS) %>% 
+  dplyr::select(c(INDIR, OUTDIR,
+                  DATE, TIME, HOUR,
+                  DATE.12, TIME.12, HOUR.12,
+                  site, DETECTOR, sitetype,
+                  autoid, filename))
+  
+
+df$siteplot <- as.factor(paste0(df$site, "-", df$sitetype))  
+dim(df)
+# 41754    14
+
+summary(df)
+
+summary(df$autoid)
+# BARBAR EPTNIL EPTSER MYOBEC MYOBRA MYODAS MYODAU MYOMYO MYOMYS MYONAT   NoID  Noise 
+#    154   3676    437     18    826    527   2330     14   1586     35   8022  23824 
+# NYCLEI NYCNOC PIPPIP PIPPYG PLEAUR PLEAUS VESMUR 
+#     26     64      6     25    160     19      5 
+summary(df$siteplot)
+# EF11-CC EF11-NN EF12-CC EF12-NN  EF2-CC  EF2-NN  EF3-CC  EF3-NN  EF4-CC  EF4-NN  EF5-CC 
+#     571    4891    6113    2588     177     629     187     286    2975    1583     598 
+#  EF5-NN  EF6-CC  EF6-NN  EF7-DA  EF7-NN  EF8-CC  EF8-NN  EF9-CC  EF9-NN 
+#     947     369    2062     436    1247     878    3235    4788    7194 
+
+summary(df$DATE)
+# # > summary(df$DATE)
+#         Min.      1st Qu.       Median         Mean      3rd Qu.         Max. 
+# "2004-01-12" "2023-06-11" "2023-06-15" "2023-04-22" "2023-06-25" "2023-07-23" 
+
+
+## DATE ERROR - in field problem 
+custom_colors <- c("#40E0D0", "#D62728", "#D62728", "#1A55A3", "#1A55A3",
+                   "#1A55A3", "#1A55A3", "#1A55A3", "#1A55A3", "#1A55A3",
+                   "#FF69B4", "#FF69B4", "gray", "black", "#4CAF50",
+                   "#4CAF50", "skyblue", "skyblue", "purple")
+
+ggplot(df, aes(x = siteplot, fill = AUTO.ID.)) +
+  geom_bar() + 
+  scale_fill_manual(values = custom_colors) +
+  theme_classic() 
+
+#there was a date error - at site EF12-CC
+baddates <- df %>% dplyr::filter(DATE < as.Date("2023-01-01")) %>% droplevels()
+# 340 obs 
+summary(baddates)
+summary(baddates$autoid)
+# EPTNIL   NoID  Noise NYCLEI 
+#      3     12    324      1 
+nbaddates <-unique(factor(baddates$DATE)) 
+# 23 days 
+
+ggplot(nbats1 %>% filter(DATE > 2023-01-01), aes(x=DATE.12)) + 
+stat_count(geom = "point", aes(y = ..count..), size = 2, color = "orange") +  facet_wrap(~siteplot, ncol = 2) +
+theme_classic() 
+
+dim(nbats1)
+summary(nbats1$DATE.12)
+# 17930    15
+
+```
+

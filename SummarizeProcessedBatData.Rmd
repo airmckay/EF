@@ -32,7 +32,6 @@ bats <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Scienc
 getwd()
 # "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/Documents/1. PhD_Main/GitHub_link/EcoForest/EF"
 
-
 ## Setup output directory 
 output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/5. EcoForest/Data/Acoustics/Bat Acoustic Data/ROutputs"
 
@@ -106,7 +105,7 @@ nbats <- read.csv("C:/Users/apmc/OneDrive - Norwegian University of Life Science
 
 nbats$AUTO.ID. <- factor(nbats$AUTO.ID.)
 summary(nbats$AUTO.ID.) 
-# 23824    noise recordings   
+# 23824    noise recordings  
 
 # mutate(Site = factor(Site), 
 #                             SitePlot = factor(SitePlot), 
@@ -256,7 +255,7 @@ ggplot(nbats1, aes(x = siteplot, fill = AUTO.ID.)) +
   scale_fill_manual(values = custom_colors) +
   theme_classic() 
 
-#there was a date error
+#there was a date error - at site 12-CC
 baddates <- nbats1 %>% filter(DATE < 2023-01-01) %>% droplevels()
 summary(baddates)
 summary(baddates$AUTO.ID.)
@@ -327,10 +326,6 @@ summary(bats1$siteplot)
 
 ##  3393 recordings from EF12-CC, I would be inclined to just drop these recordings.... or give them a false date? 
 
-
-# Hello Emma! 
-
-
 ```
 
 
@@ -380,11 +375,9 @@ ggplot(batsf) +
 
 
 ## Remove NoID and see what it looks like 
-
 nbatsf <- batsf %>% filter(AUTO.ID. != "NoID") %>% droplevels()
 colourCount = length(unique(nbatsf$AUTO.ID.))
 getPalette = colorRampPalette(brewer.pal(9, "BrBG"))
-
 
 ggplot(nbatsf) + 
   geom_bar(aes(x = AUTO.ID.), stat = "count", fill=getPalette(colourCount)) + 
