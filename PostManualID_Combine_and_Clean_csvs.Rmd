@@ -1,0 +1,736 @@
+---
+title: "PostManualID_Combine_and_Clean_csvs"
+output: html_document
+date: "2025-12-09"
+---
+
+
+# Prepare workspace and import data 
+```{r Libraries}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
+library(writexl)
+library(suncalc)
+
+
+output <-"P:/EcoForest/ProcessedAcoustics/ROutputs" # where you want to save your data
+
+file.name <- "PostManualID_Combine_and_Clean_csvs"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+# "P:/EcoForest/ProcessedAcoustics/ROutputs/PostManualID_Combine_and_Clean_csvs_2025-12-09"
+
+```
+
+
+```{r}
+# Make csvs into lists
+EF_2CB <-read_csv("P:/EcoForest/Acoustics/EF2-CC-B/ID/id.csv")
+dim(EF_2CB)
+#177  44
+EF_2CB$Site <- "EF02-CC"
+EF_2CB$SiteType <- "Clear cut"
+EF_2CB$SitePair <- "EF02"
+names(EF_2CB)
+
+EF_2NB <-read_csv("P:/EcoForest/Acoustics/EF2-NN-B/ID/id.csv")
+dim(EF_2NB)
+#629  44
+EF_2NB$Site <- "EF02-NN"
+EF_2NB$SiteType <- "Near natural"
+EF_2NB$SitePair <- "EF02"
+names(EF_2NB)
+
+EF_3CB <-read_csv("P:/EcoForest/Acoustics/EF3-CC-B/ID/id.csv") 
+dim(EF_3CB)
+# 187  44 
+EF_3CB$Site <- "EF03-CC"
+EF_3CB$SiteType <- "Clear cut"
+EF_3CB$SitePair <- "EF03"
+names(EF_3CB)
+
+EF_3NB <-read_csv("P:/EcoForest/Acoustics/EF3-NN-B/ID/id.csv")
+dim(EF_3NB)
+#286  44
+EF_3NB$Site <- "EF03-NN"
+EF_3NB$SiteType <- "Near natural"
+EF_3NB$SitePair <- "EF03"
+names(EF_3NB)
+
+EF_4CB <-read_csv("P:/EcoForest/Acoustics/EF4-CC-B/ID/id.csv") 
+dim(EF_4CB)
+#2975   44
+EF_4CB$Site <- "EF04-CC"
+EF_4CB$SiteType <- "Clear cut"
+EF_4CB$SitePair <- "EF04"
+names(EF_4CB)
+
+EF_4NB <-read_csv("P:/EcoForest/Acoustics/EF4-NN-B/ID/id.csv") 
+dim(EF_4NB)
+#1583   44
+EF_4NB$Site <- "EF04-NN"
+EF_4NB$SiteType <- "Near natural"
+EF_4NB$SitePair <- "EF04"
+names(EF_4NB)
+
+EF_5CB <-read_csv("P:/EcoForest/Acoustics/EF5-CC-B/ID/id.csv" )
+dim(EF_5CB)
+#598   44
+EF_5CB$Site <- "EF05-CC"
+EF_5CB$SiteType <- "Clear cut"
+EF_5CB$SitePair <- "EF05"
+names(EF_5CB)
+
+EF_5NB <-read_csv("P:/EcoForest/Acoustics/EF5-NN-B/ID/id.csv" )
+dim(EF_5NB)
+#947   44
+EF_5NB$Site <- "EF05-NN"
+EF_5NB$SiteType <- "Near natural"
+EF_5NB$SitePair <- "EF05"
+names(EF_5NB)
+
+EF_6CB <-read_csv("P:/EcoForest/Acoustics/EF6-CC-B/ID/id.csv")
+dim(EF_6CB)
+#369  44
+EF_6CB$Site <- "EF06-CB"
+EF_6CB$SiteType <- "Clear cut"
+EF_6CB$SitePair <- "EF06"
+names(EF_6CB)
+
+EF_6NB <-read_csv("P:/EcoForest/Acoustics/EF6-NN-B/ID/id.csv" )
+dim(EF_6NB)
+#2062      44
+EF_6NB$Site <- "EF06-NN"
+EF_6NB$SiteType <- "Near natural"
+EF_6NB$SitePair <- "EF06"
+names(EF_6NB)
+
+EF_7CB <-read_csv("P:/EcoForest/Acoustics/EF7-CC-B/ID/id.csv")
+dim(EF_7CB)
+#436  44
+EF_7CB$Site <- "EF07-CB"
+EF_7CB$SiteType <- "Clear cut"
+EF_7CB$SitePair <- "EF07"
+names(EF_7CB)
+
+EF_7NB <-read_csv("P:/EcoForest/Acoustics/EF7-NN-B/ID/id.csv" )
+dim(EF_7NB)
+#1247      44
+EF_7NB$Site <- "EF07-NN"
+EF_7NB$SiteType <- "Near natural"
+EF_7NB$SitePair <- "EF07"
+names(EF_7NB)
+
+EF_8CB <-read_csv("P:/EcoForest/Acoustics/EF8-CC-B/ID/id.csv" )
+dim(EF_8CB)
+#878  44
+EF_8CB$Site <- "EF08-CB"
+EF_8CB$SiteType <- "Clear cut"
+EF_8CB$SitePair <- "EF08"
+names(EF_8CB)
+
+EF_8NB <-read_csv("P:/EcoForest/Acoustics/EF8-NN-B/ID/id.csv")
+dim(EF_8NB)
+#3235   44
+EF_8NB$Site <- "EF08-NN"
+EF_8NB$SiteType <- "Near natural"
+EF_8NB$SitePair <- "EF08"
+names(EF_8NB)
+
+EF_9CB <-read_csv("P:/EcoForest/Acoustics/EF9-CC-B/ID/id.csv" )
+dim(EF_9CB)
+#4788  44
+EF_9CB$Site <- "EF09-CB"
+EF_9CB$SiteType <- "Clear cut"
+EF_9CB$SitePair <- "EF09"
+names(EF_9CB)
+
+EF_9NB <-read_csv("P:/EcoForest/Acoustics/EF9-NN-B/ID/id.csv" )
+dim(EF_9NB)
+#7194  44
+EF_9NB$Site <- "EF09-NN"
+EF_9NB$SiteType <- "Near natural"
+EF_9NB$SitePair <- "EF09"
+names(EF_9NB)
+
+EF_11CB <-read_csv("P:/EcoForest/Acoustics/EF11-CC-B/ID/id.csv")
+dim(EF_11CB)
+#571  44
+EF_11CB$Site <- "EF11-CB"
+EF_11CB$SiteType <- "Clear cut"
+EF_11CB$SitePair <- "EF11"
+names(EF_11CB)
+
+EF_11NB <- read_csv("P:/EcoForest/Acoustics/EF11-NN-B/ID/id.csv" )
+dim(EF_11NB)
+#4891  44
+EF_11NB$Site <- "EF11-NN"
+EF_11NB$SiteType <- "Near natural"
+EF_11NB$SitePair <- "EF11"
+names(EF_11NB)
+
+EF_12CB <-read_csv("P:/EcoForest/Acoustics/EF12-CC-B/ID/id.csv" )
+dim(EF_12CB)
+#6113  44
+EF_12CB$Site <- "EF12-CB"
+EF_12CB$SiteType <- "Clear cut"
+EF_12CB$SitePair <- "EF12"
+names(EF_12CB)
+
+EF_12NB <-read_csv("P:/EcoForest/Acoustics/EF12-NN-B/ID/id.csv" )
+dim(EF_12NB)
+#2588   44
+EF_12NB$Site <- "EF12-NN"
+EF_12NB$SiteType <- "Near natural"
+EF_12NB$SitePair <- "EF12"
+names(EF_12NB)
+
+### Now combine all together
+
+combined <- rbind(EF_2CB, EF_2NB, EF_3CB, EF_3NB,
+                  EF_4CB, EF_4NB, EF_5CB, EF_5NB,
+                  EF_6CB, EF_6NB, EF_7CB, EF_7NB,
+                  EF_8CB, EF_8NB, EF_9CB, EF_9NB,
+                  EF_11CB, EF_11NB, EF_12CB, EF_12NB)
+
+combined$autoid <- factor(combined$`AUTO ID`)
+combined$manualid <- factor(combined$`MANUAL ID*`)
+#41754 observations of 47 vars
+
+summary(combined)
+
+## Check that these combined alright
+
+DF <- combined %>% 
+  dplyr::mutate(Site = factor(Site), 
+                SiteType = factor(SiteType), 
+                SitePair = factor(SitePair)) %>% 
+  dplyr::select(-c(`AUTO ID`, `MANUAL ID*`)) %>% droplevels()
+
+summary(DF)
+summary(DF$autoid)
+# BARBAR EPTNIL MYOBRA MYODAU MYOMYS MYONAT   NoID  Noise NYCNOC PIPPYG PLEAUR VESMUR 
+#    194   4093    791   3101   2085     55   7101  23824     76     29    286    119
+summary(DF$manualid)
+summary(DF$Site)
+# EF02-CC EF02-NN EF03-CC EF03-NN EF04-CC EF04-NN EF05-CC EF05-NN 
+#     177     629     187     286    2975    1583     598     947 
+# EF06-CB EF06-NN EF07-CB EF07-NN EF08-CB EF08-NN EF09-CB EF09-NN 
+#     369    2062     436    1247     878    3235    4788    7194 
+# EF11-CB EF11-NN EF12-CB EF12-NN 
+#     571    4891    6113    2588 
+
+summary(DF$SiteType)
+   # Clear cut Near natural 
+   #     17092        24662 
+
+# Identifying noise
+# Make all observations that where autoID=Noise into manualid = Noise
+
+## First check if all NAs are Noise
+
+checkthis <- DF %>% filter(is.na(manualid)) %>% droplevels()
+summary(checkthis$autoid)
+#Only noise, good 
+# 23786 autoid Noise recordings in total 
+
+#Clean the Noise category for manualids  
+DF1 <- DF %>% mutate(manualid = factor(case_when(
+                                      autoid == "Noise" ~ "Noise",
+                                      manualid == "NOISE" ~ "Noise", 
+                                      manualid == "SHREW" ~ "Noise", 
+                                      manualid == "SHREW?" ~ "Noise", 
+                                      manualid == "SMALL MAMMAL" ~ "Noise", 
+                                      TRUE ~ manualid)))
+
+summary(DF1$manualid)
+# 24024 Noise recordings 
+#export as if before doing any further modifications 
+
+#write.csv(DF1, file=file.path(output, "EcoForest_FullManual_combinedID.csv")) 
+#output_today
+#  "P:/EcoForest/ProcessedAcoustics/ROutputs/PostManualID_Combine_and_Clean_csvs_2025-12-09"
+
+
+```
+
+
+
+next step: 
+1. all data compiled
+      - add red list category?
+2. aggregate by night
+3. inserting zeroes
+4. data exploration
+
+
+## Cleaning manual.ids 
+```{r Cleaning}
+
+#Now drop noise recordings and clean the manual ids 
+
+DF2 <- DF1 %>% filter(manualid != "Noise")
+dim(DF2)
+# 17730    47 
+# THe number of recordings that have bat passes, before parsing 
+
+## Check for duplicate files 
+duplicates <- DF2 %>%
+  group_by(`IN FILE`) %>%
+  filter(n() > 1) %>% 
+  ungroup()
+# No duplicates, good. 
+
+
+# Trim down to just essential columns
+DF3 <- DF2 %>% 
+  dplyr::select(`IN FILE`, INDIR, OUTDIR, DURATION, 
+         DATE, TIME, HOUR, 
+         `DATE-12`, `TIME-12`, `HOUR-12`, 
+         autoid, manualid, 
+         Site, SiteType, SitePair) %>% 
+  rename(filename =`IN FILE`, 
+         DATE.12 = `DATE-12`, 
+         TIME.12 = `TIME-12`, 
+         HOUR.12 = `HOUR-12`) 
+#17730 obs of 15 variables 
+
+summary(DF3)
+summary(DF3$manualid)
+## Clean any inconsistencies in the manual ids for different taxa 
+
+DF3$mid <- factor(gsub("MYSP", "MYOT", DF3$manualid))
+DF3$mid <- factor(gsub("\\.T", ".S", DF3$mid)) # There was only one PPYG.T
+DF3$mid <- factor(gsub("PIPYG", "PPYG", DF3$mid))
+summary(DF3$mid)
+```
+
+
+
+```{r Parse behavior and multiple species}
+# Split recordings with multiple species into separate rows
+DF4 <- DF3 %>% separate_rows(mid, sep = "_")
+DF4$mid <- factor(DF4$mid)
+summary(DF4$mid)
+# 
+#     ENIL   ENIL.B ENIL.B.S   ENIL.S     EPNI     MYOT 
+#     4170      685        9       48        1    10124 
+#   MYOT.B MYOT.B.S   MYOT.S     NNOC   NNOC.B     NoID 
+#     2366        2        9       11        2       33 
+#   NoID.S     NYCT   NYCT.B NYCT.B.S   NYCT.S     PAUR 
+#       16      188       27        1      105      114 
+#   PAUR.S   PISP.S     PPYG   PPYG.B   PPYG.S 
+#       77        1       28        4        1 
+
+
+# Create separate behavior column, remove behavior tags from manuals ids
+DF5 <- DF4 %>%
+  mutate(mid1 = as.character(mid)) %>% 
+  mutate(behavior = factor(case_when(
+    str_detect(mid1, ".B") ~ "Feeding",
+    str_detect(mid1, ".S") ~ "Social",
+    str_detect(mid1,".B.S") ~ "Feeding",
+    TRUE ~ "Commuting"
+  ))) %>% 
+  mutate(mid1 = factor(mid1)) 
+
+summary(DF5$behavior)
+# Commuting   Feeding    Social 
+#     14669      3096       257 
+
+summary(DF5$mid1)
+
+# Removing behavior from manual ID column
+DF5$mid <- factor(gsub(".B", "", DF5$mid))
+DF5$mid <- factor(gsub(".S", "", DF5$mid))
+summary(DF5$mid)
+ # ENIL  EPNI  MYOT  NNOC  NoID  NYCT  PAUR    PP  PPYG 
+ # 4912     1 12501    13    49   321   191     1    33 
+
+## Now fix the EPNI and PP (should be PISP)
+DF5$mid <- factor(gsub("EPNI", "ENIL", DF5$mid))
+DF5$mid <- factor(gsub("PP", "PISP", DF5$mid))
+DF5$mid <- factor(gsub("PISPYG", "PPYG", DF5$mid))
+summary(DF5$mid)
+ # ENIL  MYOT  NNOC  NoID  NYCT  PAUR  PISP  PPYG 
+ # 4913 12501    13    49   321   191     1    33 
+
+# Clean the Manual id columns 
+
+DF6 <- DF5 %>% mutate(manualid = factor(mid)) %>% 
+  dplyr::select(-c(mid, mid1)) 
+
+summary(DF6)
+
+#write.csv(DF6, file = file.path(output_today, "BatPasses_NoNoise_Cleaned_Behavior.csv"))
+# 09.12.2026
+
+```
+
+### Start here! ### 
+
+### Add a bat taxa column 
+### Overview of equipment failures 
+### Quick data exploration 
+### Send to Katrine 
+
+
+
+
+```{r Site column}
+# Split recorder serial number from IN.FILE column
+IDtest3 <- IDtest2 %>% separate(IN.FILE, into = c("det.nr", "other.values"), sep = "_", extra = "merge")
+
+# Trim down to just essential columns
+IDtest4 <- IDtest3 %>% 
+  select(Filename, det.nr, DURATION, 
+         DATE, TIME, HOUR, 
+         DATE.12, TIME.12, HOUR.12, 
+         AUTO.ID., PULSES, MATCH.RATIO, 
+         MANUAL.ID, behavior)
+
+
+# Load data with site and detector number
+site <- read_excel("~/1. PhD_Main/GitHub_link/EcoForest/Data wrangling Emma/2. Cleaning data/Input/Site_DetectorNr.xlsx")
+
+# Merge data
+
+IDtest5 <- merge(IDtest4, site, by = "det.nr")
+
+IDtest5$Site <- factor(IDtest5$Site)
+
+```
+
+
+```{r Writing csv}
+
+# Saving csv
+setwd(output)
+#write.csv(IDtest5, file="cleanedID_05.02.24.csv", na="NA")
+
+```
+
+
+
+
+```{r Exploratory graphs}
+library(ggplot2)
+
+## Why IDtest2 here instead of IDtest5? 
+
+IDtest2 %>% ggplot() +
+  geom_point(aes(x = DATE, y = MANUAL.ID, color = behavior))
+
+```
+
+
+
+### Aggregate to night 
+
+```{r}
+active.nights <- read_xlsx("~/1. PhD_Main/GitHub_link/EcoForest/Data wrangling Emma/3. Aggregating by night and inserting zeroes/Input/BatPassActiveNights.xlsx")
+## 807 of 6 
+### This needs to not have any bat pass information in it. That data you need to get from the bats1 object - this is why you got so much more bat passes in the end. 
+
+active.nights <- active.nights %>% select(-batpass)
+
+bats1 <- IDtest5
+
+bats1$taxa <- bats1$MANUAL.ID
+levels(bats1$taxa)
+summary(bats1$taxa)
+
+# "BABA" "EPNI" "LR1"  "LR2"  "MR1"  "NYNO" "NoID" "PAUR" "PINA" "PIPY" "SR1"  "VEMU"
+levels(bats1$taxa) <- list("Eptesicus nilssonii" = "EPNI",
+                           "Myotis" = "MYOT",
+                           "Nyctalus noctula" = "NYNO",
+                           "Vespertilio murinus" = "VEMU",
+                           "Pipistrellus pygmaeus" = "PIPY",
+                            "Unknown bat" = "NoID",
+                           "blank" = "") 
+summary(bats1$taxa)
+  # Eptesicus nilssonii                Myotis      Nyctalus noctula 
+  #                4200                  4481                    15 
+  # Vespertilio murinus Pipistrellus pygmaeus           Unknown bat 
+  #                   8                     2                   205 
+  #               blank                  NA's 
+  #                   3                    15 
+
+## 15 NAs which were not parsed properly. "EPNINoID"
+## Ask Emma if she also had this issue, if so it should be fixed in an early stage (during manual cleaning) 
+# I will do a temporary solution here. 
+
+bats1.5 <- bats1 %>% 
+  mutate(taxa1 = factor(case_when(
+  MANUAL.ID == "EPNINoID" ~ "EPNI_NoID",
+  .default = taxa))) %>% 
+  separate_rows(taxa1, sep = "_") %>% 
+  mutate(taxa1 = factor(taxa1))
+
+summary(bats1.5$taxa1) 
+
+bats1.5$taxa2 <- gsub("EPNI", "Eptesicus nilssonii", bats1.5$taxa1)
+
+bats1.5$taxa3 <- factor(gsub("NoID", "Unknown bat", bats1.5$taxa2))
+
+table(bats1.5$taxa3)
+  # Eptesicus nilssonii                Myotis 
+  #                4215                  4481 
+  #    Nyctalus noctula Pipistrellus pygmaeus 
+  #                  15                     2 
+  #         Unknown bat   Vespertilio murinus 
+  #                 220                     8 
+  #               blank 
+  #                   3
+names(bats1.5)
+
+bats1 <- bats1.5 %>% select(-c(taxa, taxa1, taxa2)) %>% rename(taxa = taxa3)
+summary(bats1)
+dim(bats1)
+# 8944   16
+```
+
+
+
+## Aggregate bat passes to night per site
+- Insert zeros
+- merge with night aggregated weather data 
+```{r}
+# Format the date columns 
+bats1 <- bats1 %>% mutate(date = as.Date(DATE),
+                           night = as.Date(DATE.12))
+## Note that you have 8944 rows here which you should have 8944 bat passes in your aggregated dataset as well. 
+
+bat_sitemap <- bats1 %>% select(Site) %>% distinct() 
+
+# You had the total number of bat passes per site but I think you should do this for total taxa per site. 
+bats_nights_sum <- bats1 %>% group_by(Site, night, taxa) %>% dplyr::summarize(batpass = sum(n())) 
+bats_nights_sum1 <- left_join(bats_nights_sum, bat_sitemap)
+summary(bats_nights_sum1) #
+summary(bats_nights_sum1$batpass)
+   # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   # 1.00    1.00    3.00   11.93    9.00  261.00 
+## Note that the highest number of bat passes in a night that you have is 261.00, so that should also be the same at the end. 
+
+summary(bats_nights_sum1$Site)
+# Number of detector nights per site location before adding zero nights
+
+# Insert zero activity nights
+head(active.nights)
+
+active.nights1 <- active.nights %>% mutate(night = as.Date(DATE.12))
+head(active.nights1)
+
+active.nights1$Site <- as.factor(active.nights$SITEPLOT)
+active.nights1$night <- as.IDate(active.nights1$night, '%d.%m.%Y')
+active.nights1$night <- as.Date(active.nights1$night)
+summary(active.nights1)
+
+dat <- bats_nights_sum1 # You had the total number of bat passes per site but I think you should do this for total taxa per site. 
+summary(dat)
+
+summary(dat$Site) # Number of nights with recorded bat activity 
+
+
+#---- ADDING MISSING DAYS 
+# Adjust dataset to include nights when detectors were active but no data was collected (zero nights)
+head(active.nights)
+summary(active.nights$SITEPLOT)
+
+nights <- unique(active.nights1$night) # 48 unique nights of survey 
+
+temp <- expand.grid(Site = unique(dat$Site),  night = nights, taxa = unique(dat$taxa)) #----expanded data
+temp$night <- as.character(temp$night)
+temp$night <-  as.Date(temp$night)
+
+active.nights1$Site <- as.factor(active.nights1$Site)
+active.nights1$night <-  as.Date(active.nights1$night)
+
+str(temp)
+str(active.nights1)
+
+temp2 <- merge(temp, active.nights1) # 5355 obs of 9 variables 
+
+summary(temp2$Site) # number of monitoring nights per site with zero nights included
+# EF11-CC-B EF11-NN-B EF12-CC-B EF12-NN-B  EF2-CC-B  EF2-NN-B  EF3-CC-B 
+#       301       301       140       294       203       294       287 
+#  EF3-NN-B  EF4-CC-B  EF4-NN-B  EF5-CC-B  EF5-NN-B  EF6-CC-B  EF6-NN-B 
+#       287       294       294       287       287       294       294 
+#  EF7-NN-B  EF8-CC-B  EF8-NN-B  EF9-CC-B  EF9-NN-B 
+#       294       301       301       301       301 
+
+temp3 <- merge(temp2, dat, all.x = TRUE) 
+# 5355 obs of 9 vars 
+
+summary(temp3$Site)# number of nights per taxa per site plot 
+
+summary(temp3) 
+
+# reformat factor columns and then replace NA bat passes with zeros 
+nbats1 <- temp3 
+
+#Replace NAs with zeros 
+nbats1[is.na(nbats1)] <- 0 
+summary(nbats1)
+
+# Trim down to just essential columns
+nbats2 <- nbats1 %>% 
+  select(Site, night, batpass, taxa, 
+         LOCATION, SITETYPE, active.night) %>% distinct() 
+## Make sure you use distinct here to remove duplicate rows. 
+view(nbats2)
+
+sum(nbats2$batpass)
+# 17817
+## This number should be 8944. 
+17817/8944
+# 1.992062
+# For some reason this is doubled. 
+
+## 
+# 8944
+
+setwd(output)
+#write.csv(nbats2, "aggregatedbynight_totalbats_zeroinserted.csv") 
+
+```
+
+
+
+```{r Load csv}
+big_ID <- read.csv("combinedID_01.02.24.csv")
+```
+
+
+```{r Cleaning}
+big_ID$AUTO.ID. <- as.factor(big_ID$AUTO.ID.)
+
+# Identifying noise
+big_ID1 <- big_ID %>% filter(AUTO.ID. != "Noise")
+
+
+big_ID1$m_id <- as.factor(big_ID1$MANUAL.ID) 
+summary(big_ID1$m_id)
+
+# Removing SR1 category 
+big_ID$MANUAL.ID <- gsub("_SR1", "", big_ID$MANUAL.ID)
+
+# Removing NotBat 
+value_count <- sum(big_ID$MANUAL.ID == 'NotBat') # 134 NotBat
+
+big_ID$MANUAL.ID
+big_ID <- big_ID[big_ID$MANUAL.ID != 'NotBat', ]
+
+summary(big_ID) # Length: 8769 (8903 - 134) - correct
+
+
+
+# Trim down to just essential columns
+IDtest <- big_ID %>% 
+  select(Filename, INDIR, OUTDIR, IN.FILE, DURATION, 
+         DATE, TIME, HOUR, 
+         DATE.12, TIME.12, HOUR.12, 
+         AUTO.ID., PULSES, MATCH.RATIO, 
+         MANUAL.ID)
+
+summary(IDtest)
+# Way too many NAs (4980), all noIDs from from noID-CC and noID-NN are categorized as NA
+
+# Change NAs to NoID
+IDtest$AUTO.ID.[is.na(IDtest$AUTO.ID.)] <- "NoID"
+summary(IDtest)
+
+
+```
+
+
+```{r Parse behavior and multiple species}
+# Split recordings with multiple species into separate rows
+IDtest1 <- IDtest %>% separate_rows(MANUAL.ID, sep = "_")
+
+
+# Create separate behavior column, remove behavior tags from manuals ids
+IDtest2 <- IDtest1 %>%
+  mutate(MANUAL.ID = as.character(MANUAL.ID)) %>% 
+  mutate(behavior = case_when(
+    str_detect(MANUAL.ID, ".B") ~ "Feeding",
+    str_detect(MANUAL.ID, ".S") ~ "Social",
+    str_detect(MANUAL.ID,".B.S") ~ "Feeding",
+    TRUE ~ "Commuting"
+  )) 
+
+# Removing behavior from manual ID column
+IDtest2$MANUAL.ID <- gsub(".B", "", IDtest2$MANUAL.ID )
+IDtest2$MANUAL.ID <- gsub(".S", "", IDtest2$MANUAL.ID )
+
+# Transforming manual IDs to factor
+IDtest2$MANUAL.ID <- as.factor(IDtest2$MANUAL.ID )
+summary(IDtest2$MANUAL.ID)
+
+# Transforming behavior to factor
+IDtest2$behavior <- as.factor(IDtest2$behavior)
+summary(IDtest2$behavior)
+```
+
+
+```{r Site column}
+# Split recorder serial number from IN.FILE column
+IDtest3 <- IDtest2 %>% separate(IN.FILE, into = c("det.nr", "other.values"), sep = "_", extra = "merge")
+
+# Trim down to just essential columns
+IDtest4 <- IDtest3 %>% 
+  select(Filename, det.nr, DURATION, 
+         DATE, TIME, HOUR, 
+         DATE.12, TIME.12, HOUR.12, 
+         AUTO.ID., PULSES, MATCH.RATIO, 
+         MANUAL.ID, behavior)
+
+
+# Load data with site and detector number
+site <- read_excel("C:/Users/emmah/OneDrive/Downloads/Master/Data/Site_DetectorNr.xlsx")
+
+# Merge data
+
+IDtest5 <- merge(IDtest4, site, by = "det.nr")
+```
+
+
+```{r Writing csv}
+# Saving csv
+setwd(output)
+write.csv(IDtest5, file="cleanedID_05.02.24.csv", na="NA")
+```
+
+
+
+
+```{r Exploratory graphs}
+library(ggplot2)
+
+IDtest2 %>% ggplot() +
+  geom_point(aes(x = DATE, y = MANUAL.ID, color = behavior))
+```
